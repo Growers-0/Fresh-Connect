@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -28,5 +29,11 @@ public class ItemControllerV2 {
     @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<?> getTop5BestSellingProducts(@AuthenticationPrincipal CustomUserDetails customUserDetails){
         return itemService.getTop5BestSellingProducts(customUserDetails.getUsername());
+    }
+
+    @GetMapping("/weekly-sales")
+    @PreAuthorize("hasRole('SELLER')")
+    public ResponseEntity<?> getWeeklySalesTrend(@AuthenticationPrincipal CustomUserDetails customUserDetails, int recentDays){
+        return itemService.getWeeklySalesTrend(customUserDetails.getUsername(),recentDays);
     }
 }

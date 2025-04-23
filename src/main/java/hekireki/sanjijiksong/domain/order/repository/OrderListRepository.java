@@ -1,5 +1,6 @@
 package hekireki.sanjijiksong.domain.order.repository;
 
+import hekireki.sanjijiksong.domain.item.dto.ItemDateStatistics;
 import hekireki.sanjijiksong.domain.item.dto.ItemSalesSummaryDTO;
 import hekireki.sanjijiksong.domain.order.entity.OrderList;
 import org.springframework.data.domain.Pageable;
@@ -43,7 +44,22 @@ public interface OrderListRepository extends JpaRepository<OrderList, Long> {
     WHERE o.store.id = :storeId
     GROUP BY i.name
     ORDER BY SUM(o.countPrice) DESC
-""")
+    """)
     List<ItemSalesSummaryDTO> findItemSalesSummaryByStoreId(@Param("storeId") Long storeId, Pageable pageable);
+
+    @Query("""
+    SELECT new hekireki.sanjijiksong.domain.item.dto.ItemDateStatistics(
+        CAST(o.createdAt AS date),
+        SUM(o.countPrice)
+    )
+    FROM OrderList o
+    WHERE o.store.id = :storeId
+      AND (o.createdAt BETWEEN :startDate AND :endDate
+        OR o.modifiedAt BETWEEN :startDate AND :endDate)
+    GROUP BY CAST(o.createdAt AS date)
+    ORDER BY CAST(o.createdAt AS date) ASC
+""")
+    List<ItemDateStatistics> findSalesSummaryTotal(Long storeId, LocalDateTime startDate, LocalDateTime endDate);
+
 }
 
