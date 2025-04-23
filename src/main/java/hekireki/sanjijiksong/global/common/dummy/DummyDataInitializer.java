@@ -15,8 +15,8 @@ public class DummyDataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         int count = 10000; // 원하는 개수
-        userBatchInserter.insertUsers(count);
-        storeBatchInserter.insertStores(count);
-        itemBatchInserter.insertItems(count);
+//        userBatchInserter.insertUsers(count);
+//        storeBatchInserter.insertStores(count);
+//        itemBatchInserter.insertItems(count);
     }
 }
