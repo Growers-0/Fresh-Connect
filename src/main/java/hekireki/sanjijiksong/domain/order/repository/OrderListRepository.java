@@ -1,6 +1,8 @@
 package hekireki.sanjijiksong.domain.order.repository;
 
+import hekireki.sanjijiksong.domain.item.dto.ItemSalesSummaryDTO;
 import hekireki.sanjijiksong.domain.order.entity.OrderList;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,4 +23,27 @@ public interface OrderListRepository extends JpaRepository<OrderList, Long> {
 """)
     List<OrderList> findAllByStoreIdAndDate(@Param("storeId") Long storeId,
                                             @Param("start") LocalDateTime start,
-                                            @Param("end") LocalDateTime end);}
+                                            @Param("end") LocalDateTime end);
+
+    @Query("""
+    SELECT new hekireki.sanjijiksong.domain.item.dto.ItemSalesSummaryDTO(i.name, SUM(o.countPrice))
+    FROM OrderList o
+    LEFT JOIN o.item i
+    WHERE o.store.id = :storeId
+    GROUP BY i.name
+    ORDER BY SUM(o.countPrice) DESC
+    """)
+    List<ItemSalesSummaryDTO> findItemSalesSummaryByStoreId(@Param("storeId") Long storeId);
+
+//페이징
+    @Query("""
+    SELECT new hekireki.sanjijiksong.domain.item.dto.ItemSalesSummaryDTO(i.name, SUM(o.countPrice))
+    FROM OrderList o
+    JOIN o.item i
+    WHERE o.store.id = :storeId
+    GROUP BY i.name
+    ORDER BY SUM(o.countPrice) DESC
+""")
+    List<ItemSalesSummaryDTO> findItemSalesSummaryByStoreId(@Param("storeId") Long storeId, Pageable pageable);
+}
+
