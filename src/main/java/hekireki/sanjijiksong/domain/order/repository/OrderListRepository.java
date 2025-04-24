@@ -1,6 +1,7 @@
 package hekireki.sanjijiksong.domain.order.repository;
 
 import hekireki.sanjijiksong.domain.item.dto.ItemDateStatistics;
+import hekireki.sanjijiksong.domain.item.dto.ItemHourStatistics;
 import hekireki.sanjijiksong.domain.item.dto.ItemSalesSummaryDTO;
 import hekireki.sanjijiksong.domain.order.entity.OrderList;
 import org.springframework.data.domain.Pageable;
@@ -58,8 +59,26 @@ public interface OrderListRepository extends JpaRepository<OrderList, Long> {
         OR o.modifiedAt BETWEEN :startDate AND :endDate)
     GROUP BY CAST(o.createdAt AS date)
     ORDER BY CAST(o.createdAt AS date) ASC
-""")
+    """)
     List<ItemDateStatistics> findSalesSummaryTotal(Long storeId, LocalDateTime startDate, LocalDateTime endDate);
 
+    @Query(
+            value = """
+        SELECT 
+            HOUR(DATE_ADD(o.created_at, INTERVAL 9 HOUR)) AS hour,
+            SUM(o.count_price) AS revenue
+        FROM order_list o
+        WHERE o.store_id = :storeId
+          AND o.created_at BETWEEN :start AND :end
+        GROUP BY HOUR(DATE_ADD(o.created_at, INTERVAL 9 HOUR))
+        ORDER BY hour
+        """,
+            nativeQuery = true
+    )
+    List<ItemHourStatistics> findHourlySalesByStoreIdAndDate(
+            @Param("storeId") Long storeId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 }
 
