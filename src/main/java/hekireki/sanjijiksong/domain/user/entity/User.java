@@ -38,7 +38,7 @@ public class User extends BaseTimeEntity {
 
     //store 생성 시 id 추가
     @Setter
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "store_id")
 	private Store store;
 
