@@ -99,4 +99,6 @@ public class CustomLogoutFilter extends GenericFilterBean {
         response.addCookie(cookie);
         response.setStatus(HttpServletResponse.SC_OK);
     }
+
+
 }

@@ -28,7 +28,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    
+
     // Cache
     implementation 'org.springframework.boot:spring-boot-starter-cache'
 
@@ -37,21 +37,20 @@ dependencies {
     implementation 'co.elastic.clients:elasticsearch-java:8.11.1'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.0'
     implementation 'jakarta.json:jakarta.json-api:2.1.3'
-    
+
     // MapStruct
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
-    
+
     // DB
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'com.mysql:mysql-connector-j'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'
-    
-    // 어노테이션 프로세서 순서 조정 (Lombok이 먼저, MapStruct가 나중에)
     annotationProcessor 'org.projectlombok:lombok'
+
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
-   
+
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
@@ -80,6 +79,16 @@ dependencies {
 
     // logging
     implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+
+    // actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // prometheus
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    //elasticsearch
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+
 
 }
 

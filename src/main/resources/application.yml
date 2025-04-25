@@ -62,3 +62,9 @@ kamis:
     cert:
         id: ${KAMIS_CERT_ID}
         key: ${KAMIS_CERT_KEY}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
