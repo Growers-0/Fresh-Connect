@@ -127,11 +127,17 @@ class StoreControllerTest {
         when(storeService.getAllActiveStores(any(Pageable.class))).thenReturn(mockPage);
 
         mockMvc.perform(get("/api/v1/stores")
-                        .param("page", "0")
-                        .param("size", "10")
                         .with(SecurityMockMvcRequestPostProcessors.user("admin@example.com").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("카페 귤"));
+        
+        // 파라미터를 명시적으로 지정하는 경우도 테스트
+        mockMvc.perform(get("/api/v1/stores")
+                        .param("page", "1")
+                        .param("size", "5")
+                        .param("sort", "name,asc")
+                        .with(SecurityMockMvcRequestPostProcessors.user("admin@example.com").roles("ADMIN")))
+                .andExpect(status().isOk());
     }
 
     @Test
