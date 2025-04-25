@@ -1,9 +1,6 @@
 package hekireki.sanjijiksong.domain.item.service;
 
-import hekireki.sanjijiksong.domain.item.dto.ItemCreateRequest;
-import hekireki.sanjijiksong.domain.item.dto.ItemResponse;
-import hekireki.sanjijiksong.domain.item.dto.ItemSalesSummary;
-import hekireki.sanjijiksong.domain.item.dto.ItemUpdateRequest;
+import hekireki.sanjijiksong.domain.item.dto.*;
 import hekireki.sanjijiksong.domain.item.entity.Item;
 import hekireki.sanjijiksong.domain.item.entity.ItemStatus;
 import hekireki.sanjijiksong.domain.item.repository.ItemRepository;
@@ -203,7 +200,7 @@ public class ItemService {
     private static Map<String, ItemSalesSummary> calculateItemSalesSummary(List<OrderList> orderLists) {
         Map<String, ItemSalesSummary> itemSalesData = new HashMap<>();
         for (OrderList order : orderLists) {
-            String itemName = order.getItem().getName();
+            String itemName = order.getItem().getName(); //이 부분에서 LAZY로딩 때문에 데이터 수 만큼 쿼리를 요청
             int price = order.getCountPrice();
             int count = order.getCount();
 
