@@ -1,5 +1,6 @@
 package hekireki.sanjijiksong.domain.store.controller;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import hekireki.sanjijiksong.domain.store.dto.StoreResponse;
 import hekireki.sanjijiksong.domain.store.service.StoreSearchService;
 import org.junit.jupiter.api.DisplayName;
@@ -7,8 +8,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -23,7 +28,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(StoreSearchController.class)
+@WebMvcTest(controllers = StoreSearchController.class)
+@ActiveProfiles("test")
+@MockBean(JpaMetamodelMappingContext.class)
 class StoreSearchControllerTest {
 
     @Autowired
@@ -31,14 +38,21 @@ class StoreSearchControllerTest {
 
     @MockBean
     private StoreSearchService storeSearchService;
+    
+    @MockBean
+    private ElasticsearchOperations elasticsearchOperations;
+    
+    @MockBean
+    private ElasticsearchClient elasticsearchClient;
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = {"ADMIN"})
     @DisplayName("가게 데이터 Elasticsearch 동기화 테스트")
     void syncAllData() throws Exception {
         // when
         mockMvc.perform(post("/api/v1/stores/elastic/sync")
-                .contentType(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 // then
                 .andExpect(status().isOk());
 
@@ -46,6 +60,7 @@ class StoreSearchControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("키워드로 가게 검색 테스트")
     void searchByKeyword() throws Exception {
         // given
@@ -65,6 +80,7 @@ class StoreSearchControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("주소로 가게 검색 테스트")
     void searchByLocation() throws Exception {
         // given
@@ -84,6 +100,7 @@ class StoreSearchControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("통합 검색 테스트")
     void searchStores() throws Exception {
         // given
@@ -105,6 +122,7 @@ class StoreSearchControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("빈 검색 결과 반환 테스트")
     void searchWithNoResults() throws Exception {
         // given
