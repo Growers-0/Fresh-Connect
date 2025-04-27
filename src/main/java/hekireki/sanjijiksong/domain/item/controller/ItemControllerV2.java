@@ -1,5 +1,7 @@
 package hekireki.sanjijiksong.domain.item.controller;
 
+import hekireki.sanjijiksong.domain.item.es.ItemDocument;
+import hekireki.sanjijiksong.domain.item.repository.ItemSearchRepository;
 import hekireki.sanjijiksong.domain.item.service.ItemServiceV2;
 import hekireki.sanjijiksong.global.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.util.List;
 
 
 @RestController
@@ -20,6 +23,7 @@ import java.time.LocalDate;
 public class ItemControllerV2 {
 
     private final ItemServiceV2 itemService;
+    private final ItemSearchRepository itemSearchRepository;
 
     @GetMapping("/statistics")
     @PreAuthorize("hasRole('SELLER')")
@@ -46,5 +50,10 @@ public class ItemControllerV2 {
     ){
         LocalDate localDate = LocalDate.parse(localDateTime);
         return itemService.getDailyHourlySales(customUserDetails.getUsername(),localDate);
+    }
+
+    @GetMapping("/items/search")
+    public List<ItemDocument> search(@RequestParam String keyword) {
+        return itemSearchRepository.findByNameContainingOrDescriptionContaining(keyword, keyword);
     }
 }

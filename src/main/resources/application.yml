@@ -28,6 +28,10 @@ spring:
         format_sql: true
     defer-datasource-initialization: ${JPA_DDI:false}
 
+  data:
+    elasticsearch:
+      repositories:
+        enabled: true
 
   config:
     import: optional:file:.env[.properties]

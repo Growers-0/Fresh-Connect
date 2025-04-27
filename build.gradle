@@ -66,6 +66,8 @@ dependencies {
     // logging
     implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 
+    //elastic search
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 }
 
 tasks.named('test') {
