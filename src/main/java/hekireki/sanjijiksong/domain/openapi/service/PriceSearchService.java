@@ -1,5 +1,3 @@
-// PriceSearchService.java
-
 package hekireki.sanjijiksong.domain.openapi.service;
 
 import hekireki.sanjijiksong.domain.openapi.Repository.PriceDailySearchRepository;
@@ -36,7 +34,7 @@ public class PriceSearchService {
      */
     public List<ProductPriceResponse> searchPriceInfoByKeyword(String keyword, LocalDate startDay, LocalDate endDay) {
         // fallback 대비 extended 조회 범위
-        LocalDate extendedStart = (startDay.compareTo(endDay.minusMonths(1)) <= 0)
+        LocalDate extendedStart = (!startDay.isAfter(endDay.minusMonths(1)))
                 ? startDay
                 : endDay.minusMonths(1);
 
@@ -47,7 +45,7 @@ public class PriceSearchService {
 
         List<PriceDailyDocument> historyList = fullList.stream()
                 .filter(doc -> !doc.getSnapshotDate().isBefore(startDay) && !doc.getSnapshotDate().isAfter(endDay))
-                .collect(Collectors.toList());
+                .toList();
 
         // 단위 + 품종으로 그룹핑
         Map<PriceGroupKey, List<PriceDailyDocument>> grouped = fullList.stream()
@@ -84,14 +82,18 @@ public class PriceSearchService {
                     .build();
 
             // 기간 내 히스토리 추출
-            List<PriceHistory> history = historyList.stream()
+            List<PriceHistory> history = new ArrayList<>(historyList.stream()
                     .filter(doc -> doc.getUnit().equals(key.getUnit()) && doc.getKindName().equals(key.getKindName()))
                     .sorted(Comparator.comparing(PriceDailyDocument::getSnapshotDate))
-                    .map(doc -> PriceHistory.builder()
-                            .date(doc.getSnapshotDate().toString())
-                            .price(doc.getPrice())
-                            .build())
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toMap(
+                            PriceDailyDocument::getSnapshotDate, // 키로 snapshotDate 사용
+                            doc -> PriceHistory.builder()
+                                    .date(doc.getSnapshotDate().toString())
+                                    .price(doc.getPrice())
+                                    .build(),
+                            (existing, replacement) -> existing // 중복된 날짜가 있을 경우 기존 값을 유지
+                    ))
+                    .values());
 
             responses.add(ProductPriceResponse.builder()
                     .info(info)
@@ -143,8 +145,7 @@ public class PriceSearchService {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof PriceGroupKey)) return false;
-            PriceGroupKey that = (PriceGroupKey) o;
+            if (!(o instanceof PriceGroupKey that)) return false;
             return Objects.equals(unit, that.unit) && Objects.equals(kindName, that.kindName);
         }
 
