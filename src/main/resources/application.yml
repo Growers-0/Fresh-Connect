@@ -34,6 +34,10 @@ spring:
       port: 6379
     cache:
       type: redis
+      
+    elasticsearch:
+      repositories:
+        enabled: true
 
   config:
     import: optional:file:.env[.properties]

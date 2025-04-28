@@ -71,7 +71,7 @@ dependencies {
 
     // prometheus
     implementation 'io.micrometer:micrometer-registry-prometheus'
-    
+
     //elasticsearch
     implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 

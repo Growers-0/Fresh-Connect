@@ -52,8 +52,7 @@ public class ItemController implements ItemApi {
 
     @GetMapping("/items")
     @PreAuthorize("hasRole('SELLER')")
-    public ResponseEntity<List<ItemResponse>> getMyItems(@AuthenticationPrincipal CustomUserDetails customUserDetails
-                                                       ){
+    public ResponseEntity<List<ItemResponse>> getMyItems(@AuthenticationPrincipal CustomUserDetails customUserDetails){
         List<ItemResponse> itemListResponse = itemService.getMyItems(customUserDetails.getUsername());
         return ResponseEntity.ok(itemListResponse);
     }
