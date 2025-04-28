@@ -15,6 +15,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -40,54 +41,62 @@ public class SecurityConfig {
     }
 
     @Bean
-    public BCryptPasswordEncoder bCryptPasswordEncoder(){
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();//비밀번호 암호화
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception{
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return web -> {
+            web.ignoring()
+                .requestMatchers("/actuator/prometheus");
+        };
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf((auth) -> auth.disable());//jwt는 session을 stateless로 관리하기에 필요 없음
-        http.formLogin((auth)->auth.disable());//rest 방식이기에 login form 필요없음
+        http.formLogin((auth) -> auth.disable());//rest 방식이기에 login form 필요없음
         http.httpBasic((auth) -> auth.disable());//시큐리티의 기본 인증인 HTTP Basic 인증 비활성화
 
         http.headers(headers -> headers
-                .frameOptions(frameOptions -> frameOptions.sameOrigin()) // h2 화면
+            .frameOptions(frameOptions -> frameOptions.sameOrigin()) // h2 화면
         );
 
         http.authorizeHttpRequests((auth) -> auth
-                        .requestMatchers(
-                                "/",
-                                "/error",
-                                "/login",
-                                "/join",
-                                "/reissue",
-                                "/h2-console/**",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/api/v1/register",
-                                "/api/v1/openapi/**"
-                        ).permitAll() //해당 url경로는 인증 필요 없음
-                        .requestMatchers("/api/v1/admin").hasRole(Role.ADMIN.name())// ADMIN만 접근 가능
-                        .requestMatchers("/api/openapi/**").permitAll()
-                        .requestMatchers("/chart.html").permitAll()
+                .requestMatchers(
+                    "/",
+                    "/error",
+                    "/login",
+                    "/join",
+                    "/reissue",
+                    "/h2-console/**",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/api/v1/register",
+                    "/api/v1/openapi/**"
+                ).permitAll() //해당 url경로는 인증 필요 없음
+                .requestMatchers("/api/v1/admin").hasRole(Role.ADMIN.name())// ADMIN만 접근 가능
+                .requestMatchers("/api/openapi/**").permitAll()
+                .requestMatchers("/chart.html").permitAll()
 //                .requestMatchers().hasRole(Role.BUYER.name())//Buyer만 접근 가능
-                        .requestMatchers(HttpMethod.GET, "/api/v1/stores/*").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/stores/**").hasRole("SELLER")
-                        .requestMatchers(HttpMethod.PATCH, "/api/v1/stores/**").hasRole("SELLER")
+                .requestMatchers(HttpMethod.GET, "/api/v1/stores/*").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/stores/**").hasRole("SELLER")
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/stores/**").hasRole("SELLER")
 //                .requestMatchers().hasRole(Role.SELLER.name())//Seller만 접근 가능
-                        .anyRequest().authenticated()
+                .anyRequest().authenticated()
 
         );
 
         http.sessionManagement((session) -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS));//jwt는 session을 stateless로 관리
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS));//jwt는 session을 stateless로 관리
 
-        http.addFilterBefore(new JwtFilter(jwtUtil, userRepository),LoginFilter.class);
+        http.addFilterBefore(new JwtFilter(jwtUtil, userRepository), LoginFilter.class);
         http.addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshRepository), UsernamePasswordAuthenticationFilter.class);//로그인 필터 설정
         http.addFilterBefore(new CustomLogoutFilter(jwtUtil, refreshRepository), LogoutFilter.class);
         return http.build();

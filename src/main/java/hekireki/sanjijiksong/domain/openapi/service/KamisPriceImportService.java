@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -18,9 +20,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
+import java.util.concurrent.CompletableFuture;
 
 
 /**
@@ -31,6 +34,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
+@EnableAsync
 public class KamisPriceImportService {
     @Value("${kamis.cert.id}")
     private String certId;
@@ -49,14 +53,16 @@ public class KamisPriceImportService {
      * @param regDay 조회할 날짜 (yyyy-MM-dd 형식)
      */
     @Transactional
-    public void getPrices(String categoryCode, String regDay) {
-        URI targetUri = buildKamisUri(categoryCode, regDay);
-        KamisDailyResponse response = restTemplate.exchange(targetUri, HttpMethod.GET, getHttpEntity(), KamisDailyResponse.class).getBody();
+    public CompletableFuture<Void> getPrices(String categoryCode, String regDay) {
+        return CompletableFuture.runAsync(() -> {
+            URI targetUri = buildKamisUri(categoryCode, regDay);
+            KamisDailyResponse response = restTemplate.exchange(targetUri, HttpMethod.GET, getHttpEntity(), KamisDailyResponse.class).getBody();
 
-        List<PriceDaily> priceList = response.from();
-        log.info("Price List: {}", priceList.toString());
+            List<PriceDaily> priceList = response.from();
+            log.info("Price List: {}", priceList.toString());
 
-        priceDailyRepository.saveAll(priceList);
+            priceDailyRepository.saveAll(priceList);
+        });
     }
 
     /**
@@ -84,19 +90,20 @@ public class KamisPriceImportService {
      * @param start 시작 날짜
      * @param end 종료 날짜
      */
+    @Async
     @Transactional
-    public void getAllPricesBetween(LocalDate start, LocalDate end) {
+    public CompletableFuture<Void> getAllPricesBetween(LocalDate start, LocalDate end) {
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
             String regDay = date.toString(); // "yyyy-MM-dd" 형식
             for (String categoryCode : CATEGORY_CODES) {
-                try {
-                    getPrices(categoryCode, regDay);
-                } catch (Exception e) {
-                    // 각 API 호출 시 발생한 예외 로깅 후 다음 카테고리 호출 진행
-                    log.error("카테고리 {}의 {} 데이터 조회 실패: {}", categoryCode, regDay, e.getMessage());
-                }
+                futures.add(getPrices(categoryCode, regDay));  // 각 카테고리 가격을 비동기적으로 가져옴
             }
         }
+
+        // 모든 비동기 호출이 완료될 때까지 기다림
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     private HttpEntity<String> getHttpEntity() {

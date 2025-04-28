@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,23 +36,23 @@ public class OpenAPIController implements OpenApi {
 
     // KAMIS API를 통해 가격 정보를 가져와 저장
     @GetMapping("/kamis/prices")
-    public ResponseEntity<?> getPrice(@RequestParam(name = "category_code") String categoryCode,
-                                      @RequestParam(name = "regday") String regDay) {
-        kamisPriceImportService.getPrices(categoryCode, regDay);
-        return ResponseEntity.ok(null);
+    public CompletableFuture<ResponseEntity<?>> getPrice(@RequestParam(name = "category_code") String categoryCode,
+                                                         @RequestParam(name = "regday") String regDay) {
+        return kamisPriceImportService.getPrices(categoryCode, regDay)
+                .thenApply(aVoid -> ResponseEntity.ok().build());
     }
 
     @GetMapping("/kamis/allprices")
-    public ResponseEntity<?> getAllPrice(@RequestParam(name = "start_day") String startDay,
+    public CompletableFuture<ResponseEntity<?>> getAllPrice(@RequestParam(name = "start_day") String startDay,
                                          @RequestParam(name = "end_day") String endDay) {
         LocalDate start = LocalDate.parse(startDay);
         LocalDate end = LocalDate.parse(endDay);
-        kamisPriceImportService.getAllPricesBetween(start,end);
-        return ResponseEntity.ok("All price data fetched successfully");
+        return kamisPriceImportService.getAllPricesBetween(start, end)
+                .thenApply(aVoid -> ResponseEntity.ok("All price data fetched successfully"));
     }
 
     @GetMapping("/getPrices")
-    public ResponseEntity<?> getPrices(
+    public CompletableFuture<ResponseEntity<?>> getPrices(
             @RequestParam("item_code") @NotBlank String itemCode,
             @RequestParam("category_code") @NotBlank String categoryCode,
             @RequestParam("start_date") @NotBlank String startDate,
@@ -65,8 +66,11 @@ public class OpenAPIController implements OpenApi {
             throw new KamisException.PriceQueryPeriodTooLongException();
         }
 
-        List<ProductPriceResponse> response = productPriceService.getPriceInfo(start, end, categoryCode, itemCode);
-        return ResponseEntity.ok(response);
+        // 비동기 처리를 위해 CompletableFuture로 감싸서 반환
+        return CompletableFuture.supplyAsync(() -> {
+            List<ProductPriceResponse> response = productPriceService.getPriceInfo(start, end, categoryCode, itemCode);
+            return ResponseEntity.ok(response);
+        });
     }
 
     @GetMapping("/naver/crawling")

@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.concurrent.CompletableFuture;
+
 @Tag(name = "OpenApi", description = "KAMIS 및 네이버 트렌딩 키워드 관련 API")
 @RequestMapping("/api/v1/openapi")
 public interface OpenApi {
@@ -29,7 +31,7 @@ public interface OpenApi {
                             examples = @ExampleObject(value = "null")))
     })
     @GetMapping("/kamis/prices")
-    ResponseEntity<?> getPrice(
+    CompletableFuture<ResponseEntity<?>> getPrice(
             @RequestParam(name = "category_code")
             @Parameter(description = "카테고리 코드", example = "100")
             String categoryCode,
@@ -44,7 +46,7 @@ public interface OpenApi {
                             examples = @ExampleObject(value = "All price data fetched successfully")))
     })
     @GetMapping("/kamis/allprices")
-    ResponseEntity<?> getAllPrice(
+    CompletableFuture<ResponseEntity<?>> getAllPrice(
             @RequestParam(name = "start_day")
             @Parameter(description = "조회 시작일 (yyyy-MM-dd)", example = "2025-03-01")
             String startDay,
@@ -60,7 +62,7 @@ public interface OpenApi {
                     content = @Content(schema = @Schema(implementation = KamisException.PriceQueryPeriodTooLongException.class)))
     })
     @GetMapping("/getPrices")
-    ResponseEntity<?> getPrices(
+    CompletableFuture<ResponseEntity<?>> getPrices(
             @RequestParam("item_code")
             @Parameter(description = "상품 코드", example = "ITEM1")
             @NotBlank String itemCode,
