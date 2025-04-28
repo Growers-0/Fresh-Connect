@@ -28,6 +28,12 @@ spring:
         format_sql: true
     defer-datasource-initialization: ${JPA_DDI:false}
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+    cache:
+      type: redis
 
   config:
     import: optional:file:.env[.properties]
