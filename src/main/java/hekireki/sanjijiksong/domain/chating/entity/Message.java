@@ -1,6 +1,6 @@
 package hekireki.sanjijiksong.domain.chating.entity;
 
-import hekireki.sanjijiksong.domain.chating.DTO.MessageType;
+import hekireki.sanjijiksong.domain.chating.dto.MessageType;
 import hekireki.sanjijiksong.domain.user.entity.User;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

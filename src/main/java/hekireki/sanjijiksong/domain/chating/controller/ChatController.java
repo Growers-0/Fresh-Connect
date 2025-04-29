@@ -1,6 +1,6 @@
 package hekireki.sanjijiksong.domain.chating.controller;
 
-import hekireki.sanjijiksong.domain.chating.DTO.ChatMessage;
+import hekireki.sanjijiksong.domain.chating.dto.ChatMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -17,9 +17,11 @@ public class ChatController {
 
     private final SimpMessagingTemplate messagingTemplate;
 
-    @GetMapping("/chattest")
-    public String chattest() {
-        return "chatTest.html";
+    @GetMapping("/chat/test")
+    public String chatTest() {
+        System.out.println("요청됨");
+        return "chatTest";
+
     }
 
     @MessageMapping("/chat/message")
@@ -45,7 +47,7 @@ public class ChatController {
                 message                       // 보낼 메시지
         );
 
-        // 보낸 사람에게도 메시지 전송 (본인 화면에도 표시하기 위해)
+        // 보낸 사람에게 메시지 전송
         messagingTemplate.convertAndSendToUser(
                 senderEmail,
                 destination,

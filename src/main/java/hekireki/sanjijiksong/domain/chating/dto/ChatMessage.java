@@ -1,4 +1,4 @@
-package hekireki.sanjijiksong.domain.chating.DTO;
+package hekireki.sanjijiksong.domain.chating.dto;
 
 public record ChatMessage (
         MessageType type,

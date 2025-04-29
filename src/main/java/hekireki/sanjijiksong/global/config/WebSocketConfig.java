@@ -20,7 +20,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer  {
         registry.addEndpoint("/ws/chat") // 클라이언트 연결 주소
                 .addInterceptors(jwtHandshakeInterceptor)
                 .setAllowedOriginPatterns("*") // CORS 설정
-                .withSockJS(); // (브라우저 호환성 위해 SockJS fallback 지원)
+                .withSockJS();
     }
 
     @Override

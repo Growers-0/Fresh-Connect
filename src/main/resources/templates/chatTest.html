@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8">
+    <title>Chat Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+      .chat-container {
+        width: 800px;
+        margin: 20px auto;
+      }
+      .login-container, .chat-box {
+        border: 1px solid #ccc;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      .messages {
+        height: 300px;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      .message {
+        margin: 5px 0;
+        padding: 5px;
+      }
+      .sent {
+        background-color: #e3f2fd;
+        margin-left: 20%;
+        border-radius: 10px;
+      }
+      .received {
+        background-color: #f5f5f5;
+        margin-right: 20%;
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body>
+  <div class="chat-container">
+    <!-- 로그인 섹션 -->
+    <div class="login-container" id="loginSection">
+      <h2>로그인</h2>
+      <input type="email" id="email" placeholder="이메일">
+      <input type="password" id="password" placeholder="비밀번호">
+      <button onclick="login()">로그인</button>
+    </div>
+
+    <!-- 채팅 섹션 -->
+    <div class="chat-box" id="chatSection" style="display: none;">
+      <h2>채팅</h2>
+      <div class="messages" id="messages"></div>
+      <div>
+        <input type="text" id="receiver" placeholder="받는 사람 이메일">
+        <input type="text" id="message" placeholder="메시지 입력">
+        <button onclick="sendMessage()">전송</button>
+      </div>
+      <p id="connectionStatus">연결 상태: 미연결</p>
+    </div>
+  </div>
+
+  <script>
+    let stompClient = null;
+    let jwtToken = null;
+    let myEmail = null;
+
+    // 로그인 함수
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: email,
+            password: password
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('로그인 실패');
+        }
+
+        // 헤더에서 토큰 추출
+        const accessToken = response.headers.get('access');
+        const refreshToken = response.headers.get('Set-Cookie'); // refresh 토큰은 쿠키로 설정됨
+
+        if (!accessToken) {
+          throw new Error('토큰을 받지 못했습니다.');
+        }
+
+        console.log('Access Token:', accessToken);
+        jwtToken = accessToken;
+        myEmail = email;
+
+        // 로그인 성공 시 UI 변경
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('chatSection').style.display = 'block';
+        connectWebSocket();
+
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('로그인 실패: ' + error.message);
+      }
+    }
+
+    // 웹소켓 연결
+    function connectWebSocket() {
+      const socket = new SockJS('/ws/chat');
+      stompClient = Stomp.over(socket);
+
+      // 연결 헤더에 토큰 추가
+      const headers = {
+        'Authorization': 'Bearer ' + jwtToken
+      };
+
+      stompClient.connect(
+              headers,
+              function(frame) {
+                console.log('Connected: ' + frame);
+                document.getElementById('connectionStatus').textContent = '연결 상태: 연결됨';
+
+                // 메시지 구독
+                stompClient.subscribe('/user/queue/messages', function(message) {
+                  const received = JSON.parse(message.body);
+                  displayMessage(received);
+                });
+              },
+              function(error) {
+                console.error('STOMP error:', error);
+                document.getElementById('connectionStatus').textContent = '연결 상태: 연결 실패';
+              }
+      );
+    }
+
+    // 메시지 전송
+    function sendMessage() {
+      if (!stompClient || !jwtToken) {
+        alert('연결이 필요합니다.');
+        return;
+      }
+
+      const receiver = document.getElementById('receiver').value;
+      const message = document.getElementById('message').value;
+
+      if (!receiver || !message) {
+        alert('받는 사람과 메시지를 입력하세요.');
+        return;
+      }
+
+      const chatMessage = {
+        type: 'TALK',
+        roomId: 'test-room',
+        receiver: receiver,
+        message: message
+      };
+
+      stompClient.send("/app/chat/message", {}, JSON.stringify(chatMessage));
+      document.getElementById('message').value = ''; // 입력창 비우기
+    }
+
+    // 메시지 표시
+    function displayMessage(message) {
+      const messagesDiv = document.getElementById('messages');
+      const messageDiv = document.createElement('div');
+
+      messageDiv.className = `message ${message.sender === myEmail ? 'sent' : 'received'}`;
+      messageDiv.textContent = `${message.sender}: ${message.message}`;
+
+      messagesDiv.appendChild(messageDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight; // 스크롤 자동 이동
+    }
+
+    // Enter 키로 메시지 전송
+    document.getElementById('message').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+  </script>
+  </body>
+  </html>
