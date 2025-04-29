@@ -1,17 +1,12 @@
 package hekireki.sanjijiksong.domain.openapi.service;
 
-import hekireki.sanjijiksong.domain.openapi.document.PriceDailyDocument;
-import hekireki.sanjijiksong.domain.openapi.entity.PriceDaily;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.List;
 
 
 

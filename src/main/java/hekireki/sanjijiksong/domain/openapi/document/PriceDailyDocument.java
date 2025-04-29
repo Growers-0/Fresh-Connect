@@ -1,5 +1,6 @@
 package hekireki.sanjijiksong.domain.openapi.document;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import hekireki.sanjijiksong.domain.openapi.entity.PriceDaily;
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -47,6 +48,7 @@ public class PriceDailyDocument {
     private String unit;
 
     @Field(type = FieldType.Date)
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate snapshotDate;
 
     @Field(type = FieldType.Integer)
