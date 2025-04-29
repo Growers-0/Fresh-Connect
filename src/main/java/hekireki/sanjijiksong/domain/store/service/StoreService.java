@@ -1,6 +1,7 @@
 package hekireki.sanjijiksong.domain.store.service;
 
 import hekireki.sanjijiksong.domain.store.dto.StoreCreateRequest;
+import hekireki.sanjijiksong.domain.store.dto.StoreProjection;
 import hekireki.sanjijiksong.domain.store.dto.StoreResponse;
 import hekireki.sanjijiksong.domain.store.dto.StoreUpdateRequest;
 import hekireki.sanjijiksong.domain.store.entity.Store;
@@ -12,11 +13,14 @@ import hekireki.sanjijiksong.global.common.exception.StoreException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -27,6 +31,7 @@ public class StoreService {
 
 
     @Transactional
+    @CacheEvict(value = {"stores", "storeById", "searchResults"}, allEntries = true)
     public StoreResponse create(StoreCreateRequest request, Long userId) {
         log.info("가게 등록 요청 - userId={}, name={}", userId, request.name());
         User user = userRepository.findById(userId)
@@ -61,6 +66,7 @@ public class StoreService {
     }
 
 
+    @Cacheable(value = "storeById", key = "#storeId")
     public StoreResponse getById(Long storeId) {
         Store store = storeRepository.findById(storeId)
                 .filter(Store::getActive)
@@ -69,8 +75,20 @@ public class StoreService {
         return StoreResponse.of(store);
     }
 
+    /**
+     * User 정보가 필요한 경우 사용하는 메서드 - fetch join으로 N+1 문제 해결
+     */
+    @Cacheable(value = "storeById", key = "'withUser_' + #storeId")
+    public StoreResponse getByIdWithUser(Long storeId) {
+        Store store = storeRepository.findByIdWithUserFetchJoin(storeId)
+                .orElseThrow(() -> new StoreException(ErrorCode.STORE_NOT_FOUND));
+                
+        return StoreResponse.of(store);
+    }
+
 
     @Transactional
+    @CacheEvict(value = {"stores", "storeById", "searchResults"}, allEntries = true)
     public void deactivate(Long storeId, Long userId) {
         log.info("가게 비활성화 요청 - storeId={}, userId={}", storeId, userId);
         Store store = storeRepository.findById(storeId)
@@ -85,13 +103,25 @@ public class StoreService {
     }
 
 
+    @Cacheable(value = "stores", key = "'page_' + #pageable.pageNumber + '_size_' + #pageable.pageSize + '_sort_' + #pageable.sort")
     public Page<StoreResponse> getAllActiveStores(Pageable pageable) {
-        return storeRepository.findByActiveTrue(pageable)
+        return storeRepository.findAllActiveStoresWithCountOptimization(pageable)
                 .map(StoreResponse::of);
+    }
+
+    /**
+     * 프로젝션을 사용하여 필요한 필드만 조회하는 최적화 메서드
+     */
+    @Cacheable(value = "stores", key = "'projection_all'")
+    public List<StoreResponse> getAllActiveStoresWithProjection() {
+        return storeRepository.findAllActiveStoresWithProjection().stream()
+                .map(StoreProjection::toResponse)
+                .collect(Collectors.toList());
     }
   
 
     @Transactional
+    @CacheEvict(value = {"stores", "storeById", "searchResults"}, allEntries = true)
     public StoreResponse update(Long storeId, Long userId, StoreUpdateRequest request) {
         log.info("가게 수정 요청 - storeId={}, userId={}, 변경 내용: name={}, address={}, description={}, image={}",
                 storeId, userId,
@@ -121,6 +151,7 @@ public class StoreService {
     }
 
 
+    @Cacheable(value = "searchResults", key = "#keyword")
     public List<StoreResponse> searchByKeyword(String keyword) {
         log.info("가게 검색 요청 - keyword={}", keyword);
         List<Store> matchedStores = storeRepository.findByNameContainingAndActiveTrue(keyword);
@@ -128,5 +159,15 @@ public class StoreService {
                 .map(StoreResponse::of)
                 .toList();
     }
-
+    
+    /**
+     * 프로젝션을 사용하여 키워드 검색 시 필요한 필드만 조회하는 최적화 메서드
+     */
+    @Cacheable(value = "searchResults", key = "'projection_' + #keyword")
+    public List<StoreResponse> searchByKeywordWithProjection(String keyword) {
+        log.info("프로젝션을 사용한 가게 검색 요청 - keyword={}", keyword);
+        return storeRepository.findByNameContainingAndActiveTrueWithProjection(keyword).stream()
+                .map(StoreProjection::toResponse)
+                .collect(Collectors.toList());
+    }
 }

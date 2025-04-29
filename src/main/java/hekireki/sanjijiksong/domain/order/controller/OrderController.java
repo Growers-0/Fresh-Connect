@@ -41,7 +41,7 @@ public class OrderController implements OrderApi {
     // 주문 취소
     @PatchMapping("/{orderId}/cancel")
     public ResponseEntity<Void> cancelOrder(
-            @PathVariable Long orderId,
+            @PathVariable("orderId") Long orderId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         orderService.cancelOrder(orderId, userDetails.getUser());
@@ -51,7 +51,7 @@ public class OrderController implements OrderApi {
     // 주문 수정
     @PatchMapping("/{orderId}/items/{itemId}")
     public ResponseEntity<OrderResponse> updateOrderItems(
-            @PathVariable Long orderId,
+            @PathVariable("orderId") Long orderId,
             @RequestBody @Valid OrderListUpdateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         OrderResponse response = orderService.updateOrderItems(request, userDetails.getUser());
@@ -62,7 +62,7 @@ public class OrderController implements OrderApi {
     // 단일 주문 조회
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponse> getOrderDetail(
-            @PathVariable Long orderId,
+            @PathVariable("orderId") Long orderId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         OrderResponse response = orderService.getOrderDetail(orderId, userDetails.getUser());

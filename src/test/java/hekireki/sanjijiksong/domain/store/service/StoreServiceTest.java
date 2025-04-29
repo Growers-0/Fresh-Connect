@@ -112,10 +112,12 @@ class StoreServiceTest {
         Store store = Store.builder().id(1L).name("가게").active(true).build();
         Page<Store> mockPage = new PageImpl<>(List.of(store));
 
-        when(storeRepository.findByActiveTrue(any(Pageable.class))).thenReturn(mockPage);
+        when(storeRepository.findAllActiveStoresWithCountOptimization(any(Pageable.class))).thenReturn(mockPage);
 
         Page<StoreResponse> responses = storeService.getAllActiveStores(PageRequest.of(0, 10));
         assertEquals(1, responses.getTotalElements());
+        
+        verify(storeRepository).findAllActiveStoresWithCountOptimization(any(Pageable.class));
     }
 
 

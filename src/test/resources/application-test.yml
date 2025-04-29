@@ -1,0 +1,59 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+    defer-datasource-initialization: true
+
+  elasticsearch:
+    uris: http://localhost:9200
+
+  data:
+    elasticsearch:
+      repositories:
+        enabled: true
+      client:
+        reactive:
+          endpoints: localhost:9200
+
+  security:
+    user:
+      name: testuser
+      password: testpassword
+      
+  jwt:
+    secret: test-jwt-secret-key-for-testing-purposes-only
+
+# AWS 테스트용 기본값 설정
+cloud:
+  aws:
+    credentials:
+      access-key: test-access-key
+      secret-key: test-secret-key
+    region:
+      static: ap-northeast-2
+    s3:
+      bucket: test-bucket
+    stack:
+      auto: false
+
+# Kamis API 테스트용 기본값
+kamis:
+  cert:
+    id: test-kamis-id
+    key: test-kamis-key
+
+logging:
+  level:
+    org.springframework.data.elasticsearch.client.WIRE: INFO
+    org.springframework.test: INFO
+    org.hibernate: INFO 

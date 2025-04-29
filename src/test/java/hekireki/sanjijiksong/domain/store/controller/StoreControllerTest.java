@@ -12,19 +12,22 @@ import hekireki.sanjijiksong.global.security.dto.CustomUserDetails;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import java.util.List;
 
@@ -33,8 +36,9 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(controllers = StoreController.class)
+@ActiveProfiles("test")
+@MockBean(JpaMetamodelMappingContext.class)
 class StoreControllerTest {
 
     @Autowired
@@ -48,6 +52,9 @@ class StoreControllerTest {
 
     @MockBean
     private S3Service s3Service;
+    
+    @MockBean
+    private ElasticsearchOperations elasticsearchOperations;
 
     private final User mockSeller = User.builder()
             .id(1L)
@@ -83,11 +90,13 @@ class StoreControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.authentication(
                                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities())
                         ))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("카페 산지"));
     }
     @Test
+    @WithMockUser(username = "seller@example.com", roles="SELLER")
     @DisplayName("가게 등록 - 이미지 없이도 성공")
     void createStoreWithoutImage() throws Exception {
         StoreCreateRequest request = new StoreCreateRequest("카페 무이미지", "서울", "설명", null);
@@ -105,20 +114,24 @@ class StoreControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.authentication(
                                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities())
                         ))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("카페 무이미지"));
     }
     @Test
+    @WithMockUser
     @DisplayName("가게 조회 - 존재하지 않는 storeId")
     void getStoreById_notFound() throws Exception {
-        when(storeService.getById(999L)).thenReturn(null);
+        when(storeService.getByIdWithUser(999L)).thenReturn(null);
 
         mockMvc.perform(get("/api/v1/stores/999"))
-                .andExpect(status().isOk()); // 이건 예외 던지게 만들 수도 있음
+                .andExpect(status().isOk())
+                .andDo(MockMvcResultHandlers.print()); // 응답 출력
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("가게 전체 조회 성공")
     void getAllStores_success() throws Exception {
         StoreResponse mockStore = new StoreResponse(1L, "카페 귤", "서울시 종로구", "맛있는 집", "image.jpg", true);
@@ -127,26 +140,37 @@ class StoreControllerTest {
         when(storeService.getAllActiveStores(any(Pageable.class))).thenReturn(mockPage);
 
         mockMvc.perform(get("/api/v1/stores")
-                        .param("page", "0")
-                        .param("size", "10")
                         .with(SecurityMockMvcRequestPostProcessors.user("admin@example.com").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("카페 귤"));
+        
+        // 파라미터를 명시적으로 지정하는 경우도 테스트
+        mockMvc.perform(get("/api/v1/stores")
+                        .param("page", "1")
+                        .param("size", "5")
+                        .param("sort", "name,asc")
+                        .with(SecurityMockMvcRequestPostProcessors.user("admin@example.com").roles("ADMIN")))
+                .andExpect(status().isOk());
     }
 
     @Test
+    @WithMockUser
     @DisplayName("특정 가게 조회 성공")
     void getStoreById() throws Exception {
-        when(storeService.getById(1L)).thenReturn(
-                new StoreResponse(1L, "카페 산지", "서울", "설명", "image.jpg", true)
-        );
+        StoreResponse mockResponse = new StoreResponse(1L, "카페 산지", "서울", "설명", "image.jpg", true);
+        
+        // getById가 아닌 컨트롤러에서 실제로 호출하는 getByIdWithUser 메서드를 모킹
+        when(storeService.getByIdWithUser(1L)).thenReturn(mockResponse);
 
         mockMvc.perform(get("/api/v1/stores/1"))
+                .andDo(MockMvcResultHandlers.print()) // 응답 출력
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1L));
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.name").value("카페 산지"));
     }
 
     @Test
+    @WithMockUser
     @DisplayName("가게 검색 성공")
     void searchStore() throws Exception {
         when(storeService.searchByKeyword("카페")).thenReturn(List.of());
@@ -156,6 +180,7 @@ class StoreControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "seller@example.com", roles="SELLER")
     @DisplayName("가게 비활성화 성공")
     void deactivateStore() throws Exception {
         CustomUserDetails userDetails = new CustomUserDetails(mockSeller);
@@ -163,11 +188,13 @@ class StoreControllerTest {
         mockMvc.perform(patch("/api/v1/stores/1/deactivate")
                         .with(SecurityMockMvcRequestPostProcessors.authentication(
                                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities())
-                        )))
+                        ))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isNoContent());
     }
 
     @Test
+    @WithMockUser(username = "seller@example.com", roles="SELLER")
     @DisplayName("가게 수정 성공")
     void updateStore() throws Exception {
         StoreUpdateRequest request = new StoreUpdateRequest("수정상점", "부산", "수정된 설명", "기존.png");
@@ -188,6 +215,7 @@ class StoreControllerTest {
                         .with(SecurityMockMvcRequestPostProcessors.authentication(
                                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities())
                         ))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
                         .with(req -> {
                             req.setMethod("PATCH");
                             return req;

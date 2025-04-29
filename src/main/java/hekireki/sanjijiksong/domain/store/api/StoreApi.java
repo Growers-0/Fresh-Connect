@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -49,15 +51,14 @@ public interface StoreApi {
     @Operation(summary = "가게 전체 조회", description = "활성화된 가게 목록을 페이징으로 조회합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping
-    ResponseEntity<?> getAllStores(@RequestParam(value = "page", defaultValue = "0") int page,
-                                   @RequestParam(value = "size", defaultValue = "10") int size);
+    ResponseEntity<?> getAllStores(@PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable);
 
-    @Operation(summary = "가게 상세 조회", description = "storeId로 특정 가게를 조회합니다.")
+    @Operation(summary = "가게 상세 조회", description = "storeId로 특정 가게를 조회합니다. User 정보를 fetch join으로 함께 로딩합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping("/{storeId}")
     ResponseEntity<StoreResponse> getStoreById(@PathVariable("storeId") Long storeId);
 
-    @Operation(summary = "가게 키워드 검색", description = "키워드로 가게를 검색합니다.")
+    @Operation(summary = "가게 키워드 검색", description = "키워드로 가게를 검색합니다. 프로젝션을 사용하여 필요한 필드만 조회합니다.")
     @ApiResponse(responseCode = "200", description = "검색 성공")
     @GetMapping("/search")
     ResponseEntity<List<StoreResponse>> searchStores(@RequestParam("keyword") String keyword);
