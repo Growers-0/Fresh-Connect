@@ -1,0 +1,28 @@
+{
+  "properties": {
+    "itemName": {
+      "type": "text",
+      "fields": {
+        "ngram": {
+          "type": "text",
+          "analyzer": "autocomplete_analyzer",
+          "search_analyzer": "standard"
+        },
+        "nori": {
+          "type": "text",
+          "analyzer": "nori_analyzer"
+        }
+      }
+    },
+    "categoryCode": { "type": "keyword" },
+    "classCode": { "type": "keyword" },
+    "itemCode": { "type": "keyword" },
+    "kindName": { "type": "text" },
+    "kindCode": { "type": "keyword" },
+    "rank": { "type": "keyword" },
+    "rankCode": { "type": "keyword" },
+    "unit": { "type": "keyword" },
+    "snapshotDate": { "type": "date" },
+    "price": { "type": "integer" }
+  }
+}

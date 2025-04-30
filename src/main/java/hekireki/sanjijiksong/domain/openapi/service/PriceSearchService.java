@@ -1,5 +1,8 @@
 package hekireki.sanjijiksong.domain.openapi.service;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhrasePrefixQuery;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import hekireki.sanjijiksong.domain.openapi.Repository.PriceDailySearchRepository;
 import hekireki.sanjijiksong.domain.openapi.document.PriceDailyDocument;
 import hekireki.sanjijiksong.domain.openapi.dto.PriceHistory;
@@ -10,6 +13,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,6 +24,7 @@ import java.util.stream.Collectors;
 public class PriceSearchService {
 
     private final PriceDailySearchRepository searchRepository;
+    private final ElasticsearchClient elasticsearchClient;
 
     /**
      * 기본 키워드 검색
@@ -103,6 +108,24 @@ public class PriceSearchService {
 
         return responses;
     }
+
+    public List<String> autoCompleteItemNames(String prefix) throws IOException {
+        SearchResponse<PriceDailyDocument> response = elasticsearchClient.search(s -> s
+                .index("pricedaily")
+                .query(q -> q
+                        .matchPhrasePrefix(m -> m
+                                .field("itemName")
+                                .query(prefix)
+                        )
+                )
+                .size(10), PriceDailyDocument.class);
+
+        return response.hits().hits().stream()
+                .map(hit -> hit.source().getItemName())
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
 
     // Helper 메소드들
     private PriceDailyDocument getLatestRecord(List<PriceDailyDocument> list, LocalDate targetDate) {

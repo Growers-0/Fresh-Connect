@@ -38,6 +38,10 @@ spring:
     elasticsearch:
       repositories:
         enabled: true
+      client:
+        reactive: false
+      mapping:
+        write-type-hints: false
 
   config:
     import: optional:file:.env[.properties]
