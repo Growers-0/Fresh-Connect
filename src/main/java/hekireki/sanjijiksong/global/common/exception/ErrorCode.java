@@ -1,12 +1,9 @@
 package hekireki.sanjijiksong.global.common.exception;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
-
 @Getter
-@RequiredArgsConstructor
 public enum ErrorCode {
     //Member
     USER_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "이미 존재하는 회원입니다."),
@@ -49,8 +46,17 @@ public enum ErrorCode {
     //Item
     ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다"),
     ITEM_ALREADY_DEACTIVATED(HttpStatus.BAD_REQUEST, "이미 비활성화된 상품입니다."),
-    ITEM_STOCK_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "상품 재고가 부족합니다.");
+    ITEM_STOCK_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "상품 재고가 부족합니다."),
+
+    // Following 관련 에러
+    ALREADY_FOLLOWING(HttpStatus.BAD_REQUEST, "이미 팔로우 중인 가게입니다."),
+    FOLLOWING_NOT_FOUND(HttpStatus.NOT_FOUND, "팔로우 정보를 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;
+
+    ErrorCode(HttpStatus status, String message) {
+        this.status = status;
+        this.message = message;
+    }
 }
