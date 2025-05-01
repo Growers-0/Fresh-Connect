@@ -1,7 +1,6 @@
 package hekireki.sanjijiksong.domain.openapi.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhrasePrefixQuery;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import hekireki.sanjijiksong.domain.openapi.Repository.PriceDailySearchRepository;
 import hekireki.sanjijiksong.domain.openapi.document.PriceDailyDocument;

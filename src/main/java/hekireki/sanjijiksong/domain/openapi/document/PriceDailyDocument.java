@@ -10,7 +10,7 @@ import org.springframework.data.elasticsearch.annotations.*;
 import java.time.LocalDate;
 
 @Document(indexName = "pricedaily", createIndex = true)
-@Setting(settingPath = "elasticsearch/pricedaily-setting.json")
+@Setting(settingPath = "elasticsearch/setting.json")
 @Mapping(mappingPath = "elasticsearch/pricedaily-mapping.json")
 @Getter
 @NoArgsConstructor

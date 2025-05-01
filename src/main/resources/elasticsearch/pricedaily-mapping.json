@@ -2,15 +2,11 @@
   "properties": {
     "itemName": {
       "type": "text",
+      "analyzer": "custom-nori-analyzer",
       "fields": {
         "ngram": {
           "type": "text",
-          "analyzer": "autocomplete_analyzer",
-          "search_analyzer": "standard"
-        },
-        "nori": {
-          "type": "text",
-          "analyzer": "nori_analyzer"
+          "analyzer": "custom-ngram-analyzer"
         }
       }
     },
