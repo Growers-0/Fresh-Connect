@@ -1,11 +1,9 @@
 package hekireki.sanjijiksong.domain.openapi.service;
 
-import hekireki.sanjijiksong.domain.openapi.Repository.PriceDailyRepository;
 import hekireki.sanjijiksong.domain.openapi.Repository.PriceDailySearchRepository;
 import hekireki.sanjijiksong.domain.openapi.Repository.TrendingKeywordRepository;
 import hekireki.sanjijiksong.domain.openapi.document.PriceDailyDocument;
 import hekireki.sanjijiksong.domain.openapi.dto.TrendingKeywordPrice;
-import hekireki.sanjijiksong.domain.openapi.entity.PriceDaily;
 import hekireki.sanjijiksong.domain.openapi.service.webdriver.WebDriverProvider;
 import hekireki.sanjijiksong.domain.openapi.entity.TrendingKeyword;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

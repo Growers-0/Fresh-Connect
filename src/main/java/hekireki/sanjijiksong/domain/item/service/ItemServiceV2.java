@@ -1,7 +1,13 @@
 package hekireki.sanjijiksong.domain.item.service;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import hekireki.sanjijiksong.domain.item.controller.ItemControllerV2;
 import hekireki.sanjijiksong.domain.item.dto.*;
 
+import hekireki.sanjijiksong.domain.item.es.ItemDocument;
+import hekireki.sanjijiksong.domain.item.repository.ItemSearchRepository;
+import hekireki.sanjijiksong.domain.openapi.document.PriceDailyDocument;
 import hekireki.sanjijiksong.domain.order.repository.OrderListRepository;
 import hekireki.sanjijiksong.domain.store.entity.Store;
 
@@ -11,11 +17,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +31,8 @@ public class ItemServiceV2 {
 
     private final OrderListRepository orderListRepository;
     private final ItemValidationService itemValidationService;
+    private final ItemSearchRepository itemSearchRepository;
+    private final ElasticsearchClient elasticsearchClient;
 
     //쿼리 개선
     //응답값 DTO로 변경
@@ -105,6 +115,27 @@ public class ItemServiceV2 {
 
         return ResponseEntity.ok(response);
 
+    }
+
+    public List<ItemDocument> searchByItemName(String keyword) {
+        return itemSearchRepository.searchByNameOnlyActive(keyword);
+    }
+
+    public List<String> autoCompleteItemNames(String prefix) throws IOException {
+        SearchResponse<ItemDocument> response = elasticsearchClient.search(s -> s
+                .index("items")
+                .query(q -> q
+                        .matchPhrasePrefix(m -> m
+                                .field("name")
+                                .query(prefix)
+                        )
+                )
+                .size(10), ItemDocument.class);
+
+        return response.hits().hits().stream()
+                .map(hit -> hit.source().getName())
+                .distinct()
+                .collect(Collectors.toList());
     }
 
 }

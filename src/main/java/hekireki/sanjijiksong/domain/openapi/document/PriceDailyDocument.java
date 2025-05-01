@@ -1,20 +1,22 @@
 package hekireki.sanjijiksong.domain.openapi.document;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import hekireki.sanjijiksong.domain.openapi.entity.PriceDaily;
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.*;
 
 import java.time.LocalDate;
 
-@Document(indexName = "pricedaily")
+@Document(indexName = "pricedaily", createIndex = true)
+@Setting(settingPath = "elasticsearch/setting.json")
+@Mapping(mappingPath = "elasticsearch/pricedaily-mapping.json")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PriceDailyDocument {
 
     @Id

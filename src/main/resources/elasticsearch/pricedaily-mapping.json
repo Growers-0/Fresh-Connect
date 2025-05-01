@@ -1,0 +1,24 @@
+{
+  "properties": {
+    "itemName": {
+      "type": "text",
+      "analyzer": "custom-nori-analyzer",
+      "fields": {
+        "ngram": {
+          "type": "text",
+          "analyzer": "custom-ngram-analyzer"
+        }
+      }
+    },
+    "categoryCode": { "type": "keyword" },
+    "classCode": { "type": "keyword" },
+    "itemCode": { "type": "keyword" },
+    "kindName": { "type": "text" },
+    "kindCode": { "type": "keyword" },
+    "rank": { "type": "keyword" },
+    "rankCode": { "type": "keyword" },
+    "unit": { "type": "keyword" },
+    "snapshotDate": { "type": "date" },
+    "price": { "type": "integer" }
+  }
+}

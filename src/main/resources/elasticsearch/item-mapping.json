@@ -1,0 +1,25 @@
+{
+  "properties": {
+    "name": {
+      "type": "text",
+      "analyzer": "custom-nori-analyzer",
+      "fields": {
+        "ngram": {
+          "type": "text",
+          "analyzer": "custom-ngram-analyzer"
+        }
+      }
+    },
+    "id": { "type": "keyword" },
+    "storeId": { "type": "long" },
+    "price": { "type": "integer" },
+    "image": { "type": "keyword" },
+    "stock": { "type": "integer" },
+    "description": { "type": "text" },
+    "active": { "type": "boolean" },
+    "itemStatus": { "type": "keyword" },
+    "category": { "type": "keyword" },
+    "createdAt": { "type": "date" },
+    "modifiedAt": { "type": "date" }
+  }
+}

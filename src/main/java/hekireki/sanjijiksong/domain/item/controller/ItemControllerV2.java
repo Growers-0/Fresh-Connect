@@ -1,7 +1,6 @@
 package hekireki.sanjijiksong.domain.item.controller;
 
 import hekireki.sanjijiksong.domain.item.es.ItemDocument;
-import hekireki.sanjijiksong.domain.item.repository.ItemSearchRepository;
 import hekireki.sanjijiksong.domain.item.service.ItemServiceV2;
 import hekireki.sanjijiksong.global.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -23,7 +23,6 @@ import java.util.List;
 public class ItemControllerV2 {
 
     private final ItemServiceV2 itemService;
-    private final ItemSearchRepository itemSearchRepository;
 
     @GetMapping("/statistics")
     @PreAuthorize("hasRole('SELLER')")
@@ -54,6 +53,12 @@ public class ItemControllerV2 {
 
     @GetMapping("/items/search")
     public List<ItemDocument> search(@RequestParam String keyword) {
-        return itemSearchRepository.findByNameContainingOrDescriptionContaining(keyword, keyword);
+        return itemService.searchByItemName(keyword);
+    }
+
+    @GetMapping("/autocomplete")
+    public ResponseEntity<List<String>> autoComplete(@RequestParam("prefix") String prefix) throws IOException {
+        List<String> suggestions = itemService.autoCompleteItemNames(prefix);
+        return ResponseEntity.ok(suggestions);
     }
 }

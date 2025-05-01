@@ -28,7 +28,6 @@ spring:
         format_sql: true
     defer-datasource-initialization: ${JPA_DDI:false}
 
-
   data:
     redis:
       host: localhost
@@ -39,21 +38,13 @@ spring:
     elasticsearch:
       repositories:
         enabled: true
+      client:
+        reactive: false
+      mapping:
+        write-type-hints: false
 
   config:
     import: optional:file:.env[.properties]
-
-  # Elasticsearch 설정
-  elasticsearch:
-    uris: http://localhost:9200
-
-  data:
-    elasticsearch:
-      repositories:
-        enabled: true
-      client:
-        reactive:
-          endpoints: localhost:9200
 
 h2:
   console:

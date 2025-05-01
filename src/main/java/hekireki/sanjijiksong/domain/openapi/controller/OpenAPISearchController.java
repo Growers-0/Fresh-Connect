@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -35,5 +36,11 @@ public class OpenAPISearchController {
             @RequestParam("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
         return priceSearchService.searchPriceInfoByKeyword(keyword, startDate, endDate);
+    }
+
+    @GetMapping("/autocomplete")
+    public ResponseEntity<List<String>> autoComplete(@RequestParam("prefix") String prefix) throws IOException {
+        List<String> suggestions = priceSearchService.autoCompleteItemNames(prefix);
+        return ResponseEntity.ok(suggestions);
     }
 }

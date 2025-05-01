@@ -2,6 +2,8 @@ package hekireki.sanjijiksong.domain.openapi.service;
 
 
 import hekireki.sanjijiksong.domain.openapi.Repository.PriceDailyRepository;
+import hekireki.sanjijiksong.domain.openapi.Repository.PriceDailySearchRepository;
+import hekireki.sanjijiksong.domain.openapi.document.PriceDailyDocument;
 import hekireki.sanjijiksong.domain.openapi.dto.kamisDailyPrice.KamisDailyResponse;
 import hekireki.sanjijiksong.domain.openapi.entity.PriceDaily;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +47,7 @@ public class KamisPriceImportService {
     private static final List<String> CATEGORY_CODES = Arrays.asList("100", "200", "300", "400", "500", "600");
 
     private final PriceDailyRepository priceDailyRepository;
+    private final PriceDailySearchRepository priceDailySearchRepository;
     private final RestTemplate restTemplate;
 
     /**
@@ -62,6 +65,13 @@ public class KamisPriceImportService {
             log.info("Price List: {}", priceList.toString());
 
             priceDailyRepository.saveAll(priceList);
+
+            // Elasticsearch 저장
+            List<PriceDailyDocument> documents = priceList.stream()
+                    .map(PriceDailyDocument::from)
+                    .toList();
+            priceDailySearchRepository.saveAll(documents);
+            log.info("✅ {}건 Elasticsearch에 저장됨", documents.size());
         });
     }
 

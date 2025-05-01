@@ -3,11 +3,12 @@ package hekireki.sanjijiksong.domain.item.service;
 import hekireki.sanjijiksong.domain.item.dto.*;
 import hekireki.sanjijiksong.domain.item.entity.Item;
 import hekireki.sanjijiksong.domain.item.entity.ItemStatus;
+import hekireki.sanjijiksong.domain.item.es.ItemDocument;
 import hekireki.sanjijiksong.domain.item.repository.ItemRepository;
+import hekireki.sanjijiksong.domain.item.repository.ItemSearchRepository;
 import hekireki.sanjijiksong.domain.order.entity.OrderList;
 import hekireki.sanjijiksong.domain.order.repository.OrderListRepository;
 import hekireki.sanjijiksong.domain.store.entity.Store;
-import hekireki.sanjijiksong.domain.store.repository.StoreRepository;
 import hekireki.sanjijiksong.domain.user.entity.User;
 import hekireki.sanjijiksong.domain.user.repository.UserRepository;
 import hekireki.sanjijiksong.global.common.exception.ErrorCode;
@@ -34,13 +35,16 @@ public class ItemService {
 
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
-    private final StoreRepository storeRepository;
     private final OrderListRepository orderListRepository;
+    private final ItemSearchRepository itemSearchRepository;
 
     public ItemResponse createItem(ItemCreateRequest itemCreateRequest, String email) {
         Store userStore = verifyAndGetStore( email);
 
         Item savedItem = itemRepository.save(itemCreateRequest.toEntity(userStore));
+
+        itemSearchRepository.save(ItemDocument.toDocument(savedItem)); // elastic 저장
+
         return ItemResponse.from(savedItem);
     }
 
@@ -65,6 +69,8 @@ public class ItemService {
         Item item = getVerifiedItem(userStore.getId(), itemId);
         item.updateIfChanged(itemUpdateRequest);
 
+        itemSearchRepository.save(ItemDocument.toDocument(item));
+
         return ItemResponse.from(item);
     }
 
@@ -75,6 +81,8 @@ public class ItemService {
 
         Item item = getVerifiedItem(userStore.getId(), itemId);
         item.deactivate();
+
+        itemSearchRepository.save(ItemDocument.toDocument(item));
     }
 
     public ResponseEntity<Map<String, Object>> getSalesOverview(String email) {

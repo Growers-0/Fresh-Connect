@@ -1,43 +1,34 @@
 package hekireki.sanjijiksong.global.config;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 
 @Configuration
-@EnableElasticsearchRepositories(basePackages = "hekireki.sanjijiksong.domain.store.repository.search")
 public class ElasticsearchConfig {
 
     @Bean
-    public RestClient restClient() {
-        return RestClient.builder(
-                new HttpHost("localhost", 9200, "http")
-        ).build();
-    }
-
-    @Bean
-    public ElasticsearchTransport elasticsearchTransport() {
-        return new RestClientTransport(
-                restClient(),
-                new JacksonJsonpMapper()
-        );
-    }
-
-    @Bean
     public ElasticsearchClient elasticsearchClient() {
-        return new ElasticsearchClient(elasticsearchTransport());
-    }
+        // 1. Jackson 설정
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
 
-    @Bean
-    public ElasticsearchOperations elasticsearchTemplate() {
-        return new ElasticsearchTemplate(elasticsearchClient());
+        // 2. JsonpMapper에 등록
+        JacksonJsonpMapper jsonpMapper = new JacksonJsonpMapper(objectMapper);
+
+        // 3. Elasticsearch Transport 구성
+        RestClient restClient = RestClient.builder(
+                new HttpHost("localhost", 9200, "http") // host/port 맞게 수정
+        ).build();
+
+        RestClientTransport transport = new RestClientTransport(restClient, jsonpMapper);
+
+        return new ElasticsearchClient(transport);
     }
-} 
+}

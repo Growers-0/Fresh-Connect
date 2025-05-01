@@ -5,7 +5,6 @@ import hekireki.sanjijiksong.domain.openapi.dto.ProductPriceResponse;
 import hekireki.sanjijiksong.domain.openapi.dto.TrendingKeywordPrice;
 import hekireki.sanjijiksong.domain.openapi.service.KamisPriceImportService;
 import hekireki.sanjijiksong.domain.openapi.service.ProductPriceService;
-import hekireki.sanjijiksong.domain.openapi.service.OpenApiScheduler;
 import hekireki.sanjijiksong.domain.openapi.service.TrendingKeywordService;
 import hekireki.sanjijiksong.global.common.exception.KamisException;
 import jakarta.validation.constraints.NotBlank;
