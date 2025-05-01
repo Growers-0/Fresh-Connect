@@ -19,6 +19,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -119,7 +122,7 @@ public class OrderService {
     public OrderResponse getOrderDetail(Long orderId, User user) {
         log.info("주문 상세 조회 요청 - userId={}, orderId={}", user.getId(), orderId);
 
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByIdWithDetails(orderId)
                 .orElseThrow(OrderException.OrderNotFoundException::new);
 
         return OrderResponse.from(order);
@@ -129,8 +132,29 @@ public class OrderService {
     public Page<OrderResponse> getMyOrders(User user, Pageable pageable) {
         log.info("내 주문 목록 조회 요청 - userId={}, page={}, size={}", user.getId(), pageable.getPageNumber(), pageable.getPageSize());
 
-        return orderRepository.findAllByUser(user, pageable)
-                .map(OrderResponse::from);
+        // 페이징을 적용하여 주문 ID 목록 조회
+        Page<Order> orderPage = orderRepository.findAllByUserPaged(user, pageable);
+        
+        // 조회된 ID가 없으면 빈 페이지 반환
+        if(orderPage.isEmpty()) {
+            return orderPage.map(OrderResponse::from);
+        }
+        
+        // 조회된 ID로 페치 조인을 통해 상세 정보 로딩
+        List<Long> orderIds = orderPage.getContent().stream()
+                .map(Order::getId)
+                .collect(Collectors.toList());
+        
+        List<Order> ordersWithDetails = orderRepository.findByIdInWithDetails(orderIds);
+        
+        // ID별로 정렬된 맵 생성
+        return orderPage.map(order -> {
+            Order detailedOrder = ordersWithDetails.stream()
+                    .filter(o -> o.getId().equals(order.getId()))
+                    .findFirst()
+                    .orElse(order); // 못 찾으면 기본 order 사용
+            
+            return OrderResponse.from(detailedOrder);
+        });
     }
-
 }

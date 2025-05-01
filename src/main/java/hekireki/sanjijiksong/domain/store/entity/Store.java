@@ -1,5 +1,6 @@
 package hekireki.sanjijiksong.domain.store.entity;
 
+import hekireki.sanjijiksong.domain.store.listener.StoreEntityListener;
 import hekireki.sanjijiksong.domain.user.entity.User;
 import hekireki.sanjijiksong.global.common.BaseTimeEntity;
 import hekireki.sanjijiksong.global.common.exception.ErrorCode;
@@ -15,6 +16,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@EntityListeners(StoreEntityListener.class)
+@Table(indexes = {
+        @Index(name = "idx_store_name_active", columnList = "name, active"),
+        @Index(name = "idx_store_active", columnList = "active")
+})
 public class Store extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -70,13 +70,12 @@ public class StoreController  implements StoreApi {
 
     @GetMapping
     public ResponseEntity<?> getAllStores(
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
+            @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<StoreResponse> result = storeService.getAllActiveStores(pageable);
-        log.info("가게 전체 조회 요청 - page={}, size={}", page, size);
+        log.info("가게 전체 조회 요청 - page={}, size={}, sort={}", 
+                pageable.getPageNumber(), pageable.getPageSize(), 
+                pageable.getSort().toString());
 
         return ResponseEntity.ok(result);
     }
@@ -85,7 +84,7 @@ public class StoreController  implements StoreApi {
 
     @GetMapping("/{storeId}")
     public ResponseEntity<StoreResponse> getStoreById(@PathVariable("storeId") Long storeId) {
-        StoreResponse response = storeService.getById(storeId);
+        StoreResponse response = storeService.getByIdWithUser(storeId);
         if(response == null)
             log.warn("특정 가게 조회 결과 존재하지 않는 storeId: {}", storeId);
         else
@@ -96,8 +95,8 @@ public class StoreController  implements StoreApi {
 
     @GetMapping("/search")
     public ResponseEntity<List<StoreResponse>> searchStores(@RequestParam("keyword") String keyword) {
-        List<StoreResponse> results = storeService.searchByKeyword(keyword);
-        log.info("가게 검색 요청 keyword: {}", keyword);
+        List<StoreResponse> results = storeService.searchByKeywordWithProjection(keyword);
+        log.info("가게 검색 요청 (프로젝션 사용) - keyword: {}", keyword);
         return ResponseEntity.ok(results);
     }
 

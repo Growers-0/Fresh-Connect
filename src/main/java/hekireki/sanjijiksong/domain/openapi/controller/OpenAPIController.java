@@ -5,11 +5,11 @@ import hekireki.sanjijiksong.domain.openapi.dto.ProductPriceResponse;
 import hekireki.sanjijiksong.domain.openapi.dto.TrendingKeywordPrice;
 import hekireki.sanjijiksong.domain.openapi.service.KamisPriceImportService;
 import hekireki.sanjijiksong.domain.openapi.service.ProductPriceService;
-import hekireki.sanjijiksong.domain.openapi.service.OpenApiScheduler;
 import hekireki.sanjijiksong.domain.openapi.service.TrendingKeywordService;
 import hekireki.sanjijiksong.global.common.exception.KamisException;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,12 +17,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/openapi")
@@ -30,7 +33,6 @@ import java.util.concurrent.CompletableFuture;
 public class OpenAPIController implements OpenApi {
     private final KamisPriceImportService kamisPriceImportService;
     private final ProductPriceService productPriceService;
-    private final OpenApiScheduler openApiScheduler;
     private final TrendingKeywordService trendingKeywordService;
 
 
@@ -75,7 +77,12 @@ public class OpenAPIController implements OpenApi {
 
     @GetMapping("/naver/crawling")
     public ResponseEntity<?> getCrawler(){
+        Instant start = Instant.now();
         trendingKeywordService.saveTodayTrendingKeywords();
+        Instant end = Instant.now();
+        Duration duration = Duration.between(start, end);
+
+        log.info("실행 시간: {}초 {}ms", duration.getSeconds(), duration.toMillisPart());
         return ResponseEntity.ok("Crawling completed successfully");
     }
 
