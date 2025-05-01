@@ -83,7 +83,8 @@ public class SecurityConfig {
                     "/chat/**",
                     "/ws/**",
                     "/ws/chat/**",
-                    "/ws/chat/info/**"
+                    "/ws/chat/info/**",
+                    "/ws"
                 ).permitAll() //해당 url경로는 인증 필요 없음
                 .requestMatchers("/api/v1/admin").hasRole(Role.ADMIN.name())// ADMIN만 접근 가능
                 .requestMatchers("/api/openapi/**").permitAll()

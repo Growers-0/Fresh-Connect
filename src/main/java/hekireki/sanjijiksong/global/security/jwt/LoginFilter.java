@@ -1,6 +1,7 @@
 package hekireki.sanjijiksong.global.security.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hekireki.sanjijiksong.global.security.dto.CustomUserDetails;
 import hekireki.sanjijiksong.global.security.entity.Refresh;
 import hekireki.sanjijiksong.global.security.entity.TokenType;
 import hekireki.sanjijiksong.global.security.dto.LoginRequest;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.UUID;
 
 @Slf4j
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
@@ -66,7 +68,9 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult){
         log.info("login success");
+        CustomUserDetails userDetails = (CustomUserDetails) authResult.getPrincipal();
         String email = authResult.getName();
+        UUID uid = userDetails.getuid();
 
         Collection<? extends GrantedAuthority> authorities = authResult.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
@@ -76,8 +80,8 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         log.info("success role : " + role);
 
-        String access = jwtUtil.createJwt(TokenType.ACCESS.getValue(), email, role, JwtUtil.ACCESS_TOKEN_EXPIRE_TIME);
-        String refresh = jwtUtil.createJwt(TokenType.REFRESH.getValue(), email, role, JwtUtil.REFRESH_TOKEN_EXPIRE_TIME);
+        String access = jwtUtil.createJwt(TokenType.ACCESS.getValue(), email,uid, role, JwtUtil.ACCESS_TOKEN_EXPIRE_TIME);
+        String refresh = jwtUtil.createJwt(TokenType.REFRESH.getValue(), email,uid, role, JwtUtil.REFRESH_TOKEN_EXPIRE_TIME);
 
         log.info("access token : " + access);
         log.info("refresh token : " + refresh);

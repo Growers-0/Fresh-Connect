@@ -1,14 +1,20 @@
 package hekireki.sanjijiksong.domain.chating.controller;
 
 import hekireki.sanjijiksong.domain.chating.dto.ChatMessage;
+import hekireki.sanjijiksong.domain.chating.dto.MessageHistoryDTO;
+import hekireki.sanjijiksong.domain.chating.service.ChatService;
+import hekireki.sanjijiksong.global.security.dto.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 
 @Slf4j
 @Controller
@@ -16,12 +22,26 @@ import java.security.Principal;
 public class ChatController {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final ChatService chatService;
 
     @GetMapping("/chat/test")
     public String chatTest() {
-        System.out.println("요청됨");
         return "chatTest";
 
+    }
+
+    // 채팅방 생성
+    @PostMapping("/chat/room")
+    @ResponseBody
+    public String createRoom(@RequestParam String receiverEmail, Principal principal) {
+        return chatService.createChatRoom(principal.getName(), receiverEmail);
+    }
+
+    // 채팅 히스토리 조회
+    @GetMapping("/chat/history/{roomId}")
+    @ResponseBody //TODO: 유저 검증 추가
+    public ResponseEntity<List<MessageHistoryDTO>> getChatHistory(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable String roomId) {
+        return ResponseEntity.ok(chatService.getChatHistory(customUserDetails.getUsername(),roomId));
     }
 
     @MessageMapping("/chat/message")
@@ -32,17 +52,20 @@ public class ChatController {
         String destination = "/queue/messages"; // 구독 경로
 
         // 메시지 보내는 사람 설정
-        message = new ChatMessage(
+        ChatMessage newMessage = new ChatMessage(
                 message.type(),
-                message.roomId(),
+                message.chatId(),
                 senderEmail,
                 message.receiver(),
                 message.message()
         );
 
+        //메시지 저장
+        chatService.saveMessage(newMessage, senderEmail, message.receiver());
+
         // 받는 사람의 구독 주소로 메시지 전송
         messagingTemplate.convertAndSendToUser(
-                message.receiver(),           // 받는 사람의 이메일
+                newMessage.receiver(),           // 받는 사람의 이메일
                 destination,            // 구독 엔드포인트
                 message                       // 보낼 메시지
         );
@@ -51,7 +74,7 @@ public class ChatController {
         messagingTemplate.convertAndSendToUser(
                 senderEmail,
                 destination,
-                message
+                newMessage
         );
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.UUID;
 
 public class CustomUserDetails implements UserDetails {
 
@@ -31,6 +32,8 @@ public class CustomUserDetails implements UserDetails {
     public User getUser() {
         return this.user;
     }
+
+    public UUID getuid() {return this.user.getUid(); }
 
     @Override
     public String getPassword() {
