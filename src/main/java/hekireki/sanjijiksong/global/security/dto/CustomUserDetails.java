@@ -1,6 +1,7 @@
 package hekireki.sanjijiksong.global.security.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import hekireki.sanjijiksong.domain.user.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,6 +16,12 @@ public class CustomUserDetails implements UserDetails {
 
     public CustomUserDetails(User user) {
         this.user = user;
+    }
+
+    // Jackson을 위한 기본 생성자
+    @JsonCreator
+    public CustomUserDetails() {
+        this.user = new User();  // 빈 User 객체 생성
     }
 
     @Override
@@ -33,7 +40,7 @@ public class CustomUserDetails implements UserDetails {
         return this.user;
     }
 
-    public UUID getuid() {return this.user.getUid(); }
+    public UUID getUid() {return this.user.getUid(); }
 
     @Override
     public String getPassword() {

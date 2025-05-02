@@ -9,12 +9,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Controller
@@ -33,8 +35,8 @@ public class ChatController {
     // 채팅방 생성
     @PostMapping("/chat/room")
     @ResponseBody
-    public String createRoom(@RequestParam String receiverEmail, Principal principal) {
-        return chatService.createChatRoom(principal.getName(), receiverEmail);
+    public String createRoom(@RequestParam UUID receiverUid, @AuthenticationPrincipal CustomUserDetails customUserDetails ) {
+        return chatService.createChatRoom(customUserDetails.getUid(), receiverUid);
     }
 
     // 채팅 히스토리 조회
@@ -47,34 +49,12 @@ public class ChatController {
     @MessageMapping("/chat/message")
     public void sendMessage(ChatMessage message, Principal principal) {
         String senderEmail = principal.getName();
-        log.info("Received message: {}", message);
+        chatService.handleChatMessage(message, senderEmail);
+    }
 
-        String destination = "/queue/messages"; // 구독 경로
-
-        // 메시지 보내는 사람 설정
-        ChatMessage newMessage = new ChatMessage(
-                message.type(),
-                message.chatId(),
-                senderEmail,
-                message.receiver(),
-                message.message()
-        );
-
-        //메시지 저장
-        chatService.saveMessage(newMessage, senderEmail, message.receiver());
-
-        // 받는 사람의 구독 주소로 메시지 전송
-        messagingTemplate.convertAndSendToUser(
-                newMessage.receiver(),           // 받는 사람의 이메일
-                destination,            // 구독 엔드포인트
-                message                       // 보낼 메시지
-        );
-
-        // 보낸 사람에게 메시지 전송
-        messagingTemplate.convertAndSendToUser(
-                senderEmail,
-                destination,
-                newMessage
-        );
+    @GetMapping("/chat/testUid")
+    @ResponseBody
+    public String getUserUidForTest(){
+        return chatService.getUidForTest().toString();
     }
 }

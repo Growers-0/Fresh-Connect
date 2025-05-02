@@ -14,8 +14,8 @@ import java.util.UUID;
 
 public interface ChatRepository extends JpaRepository<Chat, UUID> {
     @Query("SELECT c FROM Chat c " +
-            "WHERE (c.sender.email = :email1 AND c.receiver.email = :email2) " +
-            "OR (c.receiver.email = :email2 AND c.sender.email = :email1)")
-    Optional<Chat> findByUserEmails(@Param("email1") String email1, @Param("email2") String email2);
+            "WHERE (c.sender.uid = :senderUid AND c.receiver.uid = :receiverUid) " +
+            "OR (c.receiver.uid = :receiverUid AND c.sender.uid = :senderUid)")
+    Optional<Chat> findByUserEmails(@Param("senderUid") UUID senderUid, @Param("receiverUid") UUID receiverUid);
 
 }

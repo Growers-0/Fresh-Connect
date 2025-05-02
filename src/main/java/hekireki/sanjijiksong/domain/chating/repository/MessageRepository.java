@@ -16,15 +16,15 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     @Query("SELECT new hekireki.sanjijiksong.domain.chating.dto.MessageSaveDto(u, c) " +
             "FROM User u, Chat c " +
-            "WHERE u.email = :senderEmail " +
+            "WHERE u.uid = :senderUid " +
             "AND c.id = :chatId")
     Optional<MessageSaveDto> findUserAndChatForMessage(
-            @Param("senderEmail") String senderEmail,
+            @Param("senderEmail") UUID senderUid,
             @Param("chatId") UUID chatId
     );
 
     @Query("SELECT new hekireki.sanjijiksong.domain.chating.dto.MessageHistoryDTO(m.sender.email, m.message, m.createdAt) " +
             "FROM Message m " +
-            "WHERE m.chat.id = :roomId " +
+            "WHERE m.chat.id = :chatId " +
             "ORDER BY m.createdAt")
-    List<MessageHistoryDTO> findAllByChatId(@Param("roomId") UUID roomId);}
+    List<MessageHistoryDTO> findAllByChatId(@Param("roomId") UUID chatId);}

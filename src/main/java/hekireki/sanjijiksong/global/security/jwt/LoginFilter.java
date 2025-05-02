@@ -70,7 +70,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         log.info("login success");
         CustomUserDetails userDetails = (CustomUserDetails) authResult.getPrincipal();
         String email = authResult.getName();
-        UUID uid = userDetails.getuid();
+        UUID uid = userDetails.getUid();
 
         Collection<? extends GrantedAuthority> authorities = authResult.getAuthorities();
         Iterator<? extends GrantedAuthority> iterator = authorities.iterator();

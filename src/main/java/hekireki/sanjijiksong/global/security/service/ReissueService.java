@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -49,13 +50,14 @@ public class ReissueService {
         }
 
         String email = jwtUtil.getEmail(refresh);
+        UUID uid = jwtUtil.getUid(refresh);
         String role = jwtUtil.getRole(refresh);
 
         log.info("token email : " + email);
         log.info("token email : " + role);
 
-        String newAccess = jwtUtil.createJwt(TokenType.ACCESS.getValue(), email, role, JwtUtil.ACCESS_TOKEN_EXPIRE_TIME);
-        String newRefresh = jwtUtil.createJwt(TokenType.REFRESH.getValue(), email, role, JwtUtil.REFRESH_TOKEN_EXPIRE_TIME);
+        String newAccess = jwtUtil.createJwt(TokenType.ACCESS.getValue(), email, uid, role, JwtUtil.ACCESS_TOKEN_EXPIRE_TIME);
+        String newRefresh = jwtUtil.createJwt(TokenType.REFRESH.getValue(), email, uid, role, JwtUtil.REFRESH_TOKEN_EXPIRE_TIME);
 
         refreshRepository.deleteByRefreshToken(refresh);
 

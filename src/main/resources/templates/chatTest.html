@@ -120,12 +120,6 @@
         console.log('STOMP: ' + str); // STOMP 디버깅 로그
       };
 
-      // // 연결 헤더에 토큰 추가
-      // const headers = {
-      //   'Authorization': `Bearer ${jwtToken}`
-      // };
-
-
       console.log('Connecting with headers:');
 
       stompClient.connect(
@@ -137,6 +131,7 @@
                 // 메시지 구독
                 stompClient.subscribe('/user/queue/messages', function(message) {
                   const received = JSON.parse(message.body);
+                  console.log("Received message:", received);
                   displayMessage(received);
                 });
               },
@@ -163,8 +158,8 @@
       }
 
       const chatMessage = {
-        type: 'TALK',
-        roomId: 'test-room',
+        type: 'CHAT',
+        chatId: 'test-room',
         receiver: receiver,
         message: message
       };
@@ -175,17 +170,21 @@
 
     // 메시지 표시
     function displayMessage(message) {
+      console.log("message.sender:", message.sender, "myEmail:", myEmail);
+
       const messagesDiv = document.getElementById('messages');
       const messageDiv = document.createElement('div');
 
-      messageDiv.className = `message ${message.sender === myEmail ? 'sent' : 'received'}`;
-      messageDiv.textContent = `${message.sender}: ${message.message}`;
+      const senderInfo = message.sender; // UUID 또는 이메일
+      const content = message.message;
+
+      messageDiv.className = `message ${senderInfo === myEmail ? 'sent' : 'received'}`;
+      messageDiv.textContent = `${senderInfo}: ${content}`;
 
       messagesDiv.appendChild(messageDiv);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight; // 스크롤 자동 이동
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
-    // Enter 키로 메시지 전송
     document.getElementById('message').addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         sendMessage();
