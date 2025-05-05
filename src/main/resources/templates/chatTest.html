@@ -142,8 +142,33 @@
       );
     }
 
+    let currentChatId = null;
+
+    function loadChatRoom(receiverEmail) {
+      fetch(`/chat/room?receiverEmail=${receiverEmail}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'access': jwtToken
+        }
+      })
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('채팅방 정보를 불러오지 못했습니다.');
+                }
+                return response.json();
+              })
+              .then(data => {
+                currentChatId = data.chatId;  // 응답으로 받은 chatId 저장
+                console.log("채팅방 ID:", currentChatId);
+              })
+              .catch(error => {
+                console.error('오류:', error);
+              });
+    }
+
     // 메시지 전송
-    function sendMessage() {
+    async function sendMessage() {
       if (!stompClient || !jwtToken) {
         alert('연결이 필요합니다.');
         return;
@@ -157,15 +182,26 @@
         return;
       }
 
-      const chatMessage = {
-        type: 'CHAT',
-        chatId: 'test-room',
-        receiver: receiver,
-        message: message
-      };
+      try {
+        await loadChatRoom(receiver); // chatId를 받아올 때까지 기다림
 
-      stompClient.send("/app/chat/message", {}, JSON.stringify(chatMessage));
-      document.getElementById('message').value = ''; // 입력창 비우기
+        if (!currentChatId) {
+          alert('채팅방 ID를 불러오지 못했습니다.');
+          return;
+        }
+
+        const chatMessage = {
+          type: 'CHAT',
+          chatId: currentChatId,
+          receiver: receiver,
+          message: message
+        };
+
+        stompClient.send("/app/chat/message", {}, JSON.stringify(chatMessage));
+        document.getElementById('message').value = ''; // 입력창 비우기
+      } catch (error) {
+        console.error('메시지 전송 중 오류:', error);
+      }
     }
 
     // 메시지 표시

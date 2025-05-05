@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class MessageSaveDto {
+public class MessageSaveDTO {
     private User sender;
     private Chat chat;
 }

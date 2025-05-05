@@ -13,9 +13,9 @@ import java.util.UUID;
 
 @Entity
 @RequiredArgsConstructor
+@Getter
 public class Chat {
     @Id
-    @Getter
     private UUID id;
 
     private LocalDateTime createdAt;

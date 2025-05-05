@@ -1,15 +1,15 @@
 package hekireki.sanjijiksong.domain.chating.service;
 
+import hekireki.sanjijiksong.domain.chating.dto.ChatListResponse;
 import hekireki.sanjijiksong.domain.chating.dto.ChatMessage;
 import hekireki.sanjijiksong.domain.chating.dto.MessageHistoryDTO;
-import hekireki.sanjijiksong.domain.chating.dto.MessageSaveDto;
+import hekireki.sanjijiksong.domain.chating.dto.MessageSaveDTO;
 import hekireki.sanjijiksong.domain.chating.entity.Chat;
 import hekireki.sanjijiksong.domain.chating.entity.Message;
 import hekireki.sanjijiksong.domain.chating.repository.ChatRepository;
 import hekireki.sanjijiksong.domain.chating.repository.MessageRepository;
 import hekireki.sanjijiksong.domain.user.entity.User;
 import hekireki.sanjijiksong.domain.user.repository.UserRepository;
-import hekireki.sanjijiksong.domain.user.service.UserService;
 import hekireki.sanjijiksong.global.common.exception.UserException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -29,16 +29,14 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final SimpMessageSendingOperations messagingTemplate;
 
-public String createChatRoom(UUID senderUid, UUID receiverUid) {
-        Chat existingRoom = chatRepository.findByUserEmails(senderUid, receiverUid).orElseThrow(EntityNotFoundException::new);
+public String createChatRoom(User sender, String receiverEmail) {
+        Chat existingRoom = chatRepository.findByUserUidAndReceiverEmail(sender.getUid(), receiverEmail);
 
         if (existingRoom != null) {
             return existingRoom.getId().toString();
         }
 
-        User sender = userRepository.findByUid(senderUid).orElseThrow(UserException.UserNotFoundException::new);
-        User receiver = userRepository.findByUid(receiverUid).orElseThrow(UserException.UserNotFoundException::new);
-
+        User receiver = userRepository.findByEmail(receiverEmail).orElseThrow(UserException.UserNotFoundException::new);
 
         Chat newRoom = new Chat(sender,receiver);
 
@@ -50,10 +48,10 @@ public String createChatRoom(UUID senderUid, UUID receiverUid) {
 
     }
 
-    public void saveMessage(ChatMessage chatMessage, UUID senderUid, UUID receiverUid) {
-        //TODO: chatID처리 어케함?
-        MessageSaveDto dto = messageRepository.findUserAndChatForMessage(
-                senderUid,
+    public void saveMessage(ChatMessage chatMessage, User sender) {
+
+        MessageSaveDTO dto = messageRepository.findUserAndChatForMessage(
+                sender.getUid(),
                 UUID.fromString(chatMessage.chatId()))
                 .orElseThrow(EntityNotFoundException::new);
 
@@ -64,18 +62,19 @@ public String createChatRoom(UUID senderUid, UUID receiverUid) {
 
     public void handleChatMessage(ChatMessage message, String senderEmail) {
         User sender = userRepository.findByEmail(senderEmail).orElseThrow(EntityNotFoundException::new);
-        User receiver = userRepository.findByUid(UUID.fromString(message.receiver())).orElseThrow(UserException.UserNotFoundException::new);
-        String receiverUid = message.receiver();
+        User receiver = userRepository.findByEmail(message.receiver()).orElseThrow(EntityNotFoundException::new);
+
+        String receiverEmail = message.receiver();
 
         ChatMessage newMessage = new ChatMessage(
                 message.type(),
                 message.chatId(),
-                sender.getUid().toString(),
-                receiverUid,
+                sender.getNickname(),
+                receiverEmail,
                 message.message()
         );
 
-//        saveMessage(newMessage, sender.getUid(),UUID.fromString(message.receiver()));
+        saveMessage(newMessage, sender);
 
         String destination = "/queue/messages";
 
@@ -84,17 +83,18 @@ public String createChatRoom(UUID senderUid, UUID receiverUid) {
         messagingTemplate.convertAndSendToUser(
                 receiver.getEmail(),
                 destination,
-                message
+                newMessage
         );
 
         messagingTemplate.convertAndSendToUser(
                 senderEmail,
                 destination,
-                newMessage.message()
+                newMessage
         );
     }
 
-    public UUID getUidForTest(){
-        return userRepository.findById(5L).orElseThrow(UserException.UserNotFoundException::new).getUid();
+    public List<ChatListResponse> getChatList(User user) {
+        return chatRepository.findByUserId(user.getId());
     }
+
 }

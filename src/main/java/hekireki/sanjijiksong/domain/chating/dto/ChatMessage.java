@@ -8,7 +8,7 @@ import java.util.UUID;
 public record ChatMessage (
         MessageType type,
         String chatId,
-        String senderEmail,
+        String sender,
         String receiver,
         String message) {
 }

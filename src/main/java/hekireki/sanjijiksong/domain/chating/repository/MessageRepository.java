@@ -1,9 +1,8 @@
 package hekireki.sanjijiksong.domain.chating.repository;
 
 import hekireki.sanjijiksong.domain.chating.dto.MessageHistoryDTO;
-import hekireki.sanjijiksong.domain.chating.dto.MessageSaveDto;
+import hekireki.sanjijiksong.domain.chating.dto.MessageSaveDTO;
 import hekireki.sanjijiksong.domain.chating.entity.Message;
-import hekireki.sanjijiksong.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,12 +13,12 @@ import java.util.UUID;
 
 public interface MessageRepository extends JpaRepository<Message, Long> {
 
-    @Query("SELECT new hekireki.sanjijiksong.domain.chating.dto.MessageSaveDto(u, c) " +
+    @Query("SELECT new hekireki.sanjijiksong.domain.chating.dto.MessageSaveDTO(u, c) " +
             "FROM User u, Chat c " +
             "WHERE u.uid = :senderUid " +
             "AND c.id = :chatId")
-    Optional<MessageSaveDto> findUserAndChatForMessage(
-            @Param("senderEmail") UUID senderUid,
+    Optional<MessageSaveDTO> findUserAndChatForMessage(
+            @Param("senderUid") UUID senderUid,
             @Param("chatId") UUID chatId
     );
 
