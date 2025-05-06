@@ -106,6 +106,14 @@ public class Order extends BaseTimeEntity {
         return this.orderStatus == OrderStatus.ORDERED;
     }
 
+    public void paid(String paymentKey) {
+        if (this.orderStatus == OrderStatus.PAID) {
+            throw new OrderException.OrderAlreadyPaidException();
+        }
+        this.orderStatus = OrderStatus.PAID;
+        this.tossPaymentKey = paymentKey;
+    }
+
     // 주문 수정
     public void updateOrderSummary(int oldCount, int oldPrice, int newCount, int newPrice) {
         this.stock = this.stock - oldCount + newCount;

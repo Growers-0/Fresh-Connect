@@ -72,7 +72,7 @@ public class OrderService {
 
         var paymentKey = confirm.get("paymentKey");
 
-        order.setTossPaymentKey(paymentKey.toString());
+        order.paid(paymentKey.toString());
 
         return OrderResponse.from(order);
     }

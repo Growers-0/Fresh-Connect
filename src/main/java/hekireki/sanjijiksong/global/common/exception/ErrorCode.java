@@ -30,6 +30,7 @@ public enum ErrorCode {
     ORDER_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "취소할 수 없는 주문 상태입니다."),
     ORDER_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "주문 항목이 존재하지 않습니다."),
     ORDER_NOT_UPDATABLE(HttpStatus.BAD_REQUEST, "현재 상태에서는 주문을 수정할 수 없습니다."),
+    ORDER_ALREADY_PAID(HttpStatus.BAD_REQUEST, "이미 결제된 상태입니다."),
 
     //Security
     NO_REFRESH_TOKEN_COOKIE(HttpStatus.BAD_REQUEST, "리프레시 토큰 쿠키가 존재하지 않습니다."),

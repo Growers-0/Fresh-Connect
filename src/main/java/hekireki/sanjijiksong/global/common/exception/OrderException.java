@@ -36,4 +36,10 @@ public class OrderException extends RuntimeException {
         }
     }
 
+    public static class OrderAlreadyPaidException extends OrderException {
+        public OrderAlreadyPaidException() {
+            super(ErrorCode.ORDER_NOT_CANCELABLE);
+        }
+    }
+
 }
