@@ -42,9 +42,12 @@ public class PriceSearchService {
                 ? startDay
                 : endDay.minusMonths(1);
 
+        String startDateStr = extendedStart.toString();
+        String endDateStr = endDay.toString();
+
         // Elasticsearch에서 extended 범위 데이터 조회
-        List<PriceDailyDocument> fullList = searchRepository.findByItemNameContainingAndSnapshotDateBetween(
-                keyword, extendedStart, endDay
+        List<PriceDailyDocument> fullList = searchRepository.findByItemNameKeywordAndSnapshotDateBetween(
+                keyword, startDateStr, endDateStr
         );
 
         List<PriceDailyDocument> historyList = fullList.stream()

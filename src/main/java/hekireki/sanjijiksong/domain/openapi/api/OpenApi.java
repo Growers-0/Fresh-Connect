@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 @Tag(name = "OpenApi", description = "KAMIS 및 네이버 트렌딩 키워드 관련 API")
@@ -91,5 +92,5 @@ public interface OpenApi {
                     content = @Content(schema = @Schema(implementation = TrendingKeywordPrice.class)))
     })
     @GetMapping("/naver/trending")
-    ResponseEntity<?> getTrendingKeywords();
+    ResponseEntity<?> getTrendingKeywords() throws IOException;
 }
