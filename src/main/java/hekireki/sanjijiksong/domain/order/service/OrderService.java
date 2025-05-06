@@ -5,6 +5,7 @@ import hekireki.sanjijiksong.domain.item.repository.ItemRepository;
 import hekireki.sanjijiksong.domain.order.dto.OrderListUpdateRequest;
 import hekireki.sanjijiksong.domain.order.dto.OrderRequest;
 import hekireki.sanjijiksong.domain.order.dto.OrderResponse;
+import hekireki.sanjijiksong.domain.order.dto.PaymentRequest;
 import hekireki.sanjijiksong.domain.order.entity.Order;
 import hekireki.sanjijiksong.domain.order.entity.OrderList;
 import hekireki.sanjijiksong.domain.order.entity.OrderStatus;
@@ -12,15 +13,17 @@ import hekireki.sanjijiksong.domain.order.repository.OrderRepository;
 import hekireki.sanjijiksong.domain.user.entity.User;
 import hekireki.sanjijiksong.global.common.exception.ItemException;
 import hekireki.sanjijiksong.global.common.exception.OrderException;
+import hekireki.sanjijiksong.global.common.exception.OrderException.OrderNotFoundException;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,6 +33,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ItemRepository itemRepository;
+    private final PaymentService paymentService;
 
     // 주문 생성
     @Transactional
@@ -39,7 +43,7 @@ public class OrderService {
 
         for (OrderRequest.OrderListRequest itemReq : request.orderLists()) {
             Item item = itemRepository.findById(itemReq.itemId())
-                    .orElseThrow(ItemException.ItemNotFoundException::new);
+                .orElseThrow(ItemException.ItemNotFoundException::new);
 
             if (item.getStock() < itemReq.count()) {
                 log.warn("재고 부족 - itemId={}, 요청 수량={}, 현재 재고={}", item.getId(), itemReq.count(), item.getStock());
@@ -59,13 +63,27 @@ public class OrderService {
         return OrderResponse.from(order);
     }
 
+    @Transactional
+    public OrderResponse confirmOrder(PaymentRequest paymentRequest) {
+        Order order = orderRepository.findByOrderId(UUID.fromString(paymentRequest.orderId()))
+            .orElseThrow(OrderNotFoundException::new);
+
+        Map<String, Object> confirm = paymentService.confirm(paymentRequest);
+
+        var paymentKey = confirm.get("paymentKey");
+
+        order.setTossPaymentKey(paymentKey.toString());
+
+        return OrderResponse.from(order);
+    }
+
     // 주문 취소
     @Transactional
     public void cancelOrder(Long orderId, User user) {
         log.info("주문 취소 요청 - userId={}, orderId={}", user.getId(), orderId);
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(OrderException.OrderNotFoundException::new);
+            .orElseThrow(OrderException.OrderNotFoundException::new);
 
         order.cancel();
 
@@ -84,7 +102,7 @@ public class OrderService {
         log.info("주문 수정 요청 - userId={}, orderId={}", user.getId(), request.orderId());
 
         Order order = orderRepository.findById(request.orderId())
-                .orElseThrow(OrderException.OrderNotFoundException::new);
+            .orElseThrow(OrderException.OrderNotFoundException::new);
 
         if (!order.isUpdatable()) {
             log.warn("수정 불가 상태 - orderId={}, status={}", order.getId(), order.getOrderStatus());
@@ -93,9 +111,9 @@ public class OrderService {
 
         for (OrderListUpdateRequest.OrderListItemUpdate update : request.orderLists()) {
             OrderList target = order.getOrderLists().stream()
-                    .filter(ol -> ol.getItem().getId().equals(update.itemId()))
-                    .findFirst()
-                    .orElseThrow(OrderException.OrderItemNotFoundException::new);
+                .filter(ol -> ol.getItem().getId().equals(update.itemId()))
+                .findFirst()
+                .orElseThrow(OrderException.OrderItemNotFoundException::new);
 
             Item item = target.getItem();
 
@@ -110,7 +128,7 @@ public class OrderService {
             order.updateOrderSummary(oldCount, oldPrice, target.getCount(), target.getCountPrice());
 
             log.info("주문 항목 수정 - orderId={}, itemId={}, 기존 수량={}, 변경 수량={}, 현재 재고={}",
-                    order.getId(), item.getId(), oldCount, update.count(), item.getStock());
+                order.getId(), item.getId(), oldCount, update.count(), item.getStock());
         }
 
         log.info("주문 수정 완료 - userId={}, orderId={}", user.getId(), order.getId());
@@ -123,7 +141,7 @@ public class OrderService {
         log.info("주문 상세 조회 요청 - userId={}, orderId={}", user.getId(), orderId);
 
         Order order = orderRepository.findByIdWithDetails(orderId)
-                .orElseThrow(OrderException.OrderNotFoundException::new);
+            .orElseThrow(OrderException.OrderNotFoundException::new);
 
         return OrderResponse.from(order);
     }
@@ -134,26 +152,26 @@ public class OrderService {
 
         // 페이징을 적용하여 주문 ID 목록 조회
         Page<Order> orderPage = orderRepository.findAllByUserPaged(user, pageable);
-        
+
         // 조회된 ID가 없으면 빈 페이지 반환
-        if(orderPage.isEmpty()) {
+        if (orderPage.isEmpty()) {
             return orderPage.map(OrderResponse::from);
         }
-        
+
         // 조회된 ID로 페치 조인을 통해 상세 정보 로딩
         List<Long> orderIds = orderPage.getContent().stream()
-                .map(Order::getId)
-                .collect(Collectors.toList());
-        
+            .map(Order::getId)
+            .collect(Collectors.toList());
+
         List<Order> ordersWithDetails = orderRepository.findByIdInWithDetails(orderIds);
-        
+
         // ID별로 정렬된 맵 생성
         return orderPage.map(order -> {
             Order detailedOrder = ordersWithDetails.stream()
-                    .filter(o -> o.getId().equals(order.getId()))
-                    .findFirst()
-                    .orElse(order); // 못 찾으면 기본 order 사용
-            
+                .filter(o -> o.getId().equals(order.getId()))
+                .findFirst()
+                .orElse(order); // 못 찾으면 기본 order 사용
+
             return OrderResponse.from(detailedOrder);
         });
     }

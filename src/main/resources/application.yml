@@ -34,7 +34,7 @@ spring:
       port: 6379
     cache:
       type: redis
-      
+
     elasticsearch:
       repositories:
         enabled: true
@@ -62,12 +62,19 @@ cloud:
       bucket: ${AWS_BUCKET}
 
 kamis:
-    cert:
-        id: ${KAMIS_CERT_ID}
-        key: ${KAMIS_CERT_KEY}
+  cert:
+    id: ${KAMIS_CERT_ID}
+    key: ${KAMIS_CERT_KEY}
 
 management:
   endpoints:
     web:
       exposure:
         include: prometheus
+
+tosspayments:
+  url:
+    confirm: https://api.tosspayments.com/v1/payments/confirm
+  secret: ${TOSS_SECRET}
+
+
