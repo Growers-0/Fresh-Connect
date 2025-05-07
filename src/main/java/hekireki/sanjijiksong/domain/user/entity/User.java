@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,6 +19,10 @@ import java.time.LocalDateTime;
 public class User extends BaseTimeEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+
+	@Setter
+	@Column(unique = true)
+	private UUID uid;
 
 	@Column(nullable = false)
 	private String email;

@@ -97,6 +97,12 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
+    //WebSocket
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    //Thymeleaf
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
 }
 
 tasks.named('test') {

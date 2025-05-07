@@ -31,6 +31,14 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/ws") || // 웹소켓 경로 제외
+                path.contains("/ws/chat") ||
+                path.contains("/ws/chat/info");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         log.info("JWT URI : " + request.getRequestURI());

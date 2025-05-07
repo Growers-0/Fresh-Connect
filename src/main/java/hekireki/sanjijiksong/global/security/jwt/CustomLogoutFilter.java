@@ -14,12 +14,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 public class CustomLogoutFilter extends GenericFilterBean {
 
     private final JwtUtil jwtUtil;
     private final RefreshRepository refreshRepository;
+
+    private static final List<String> EXCLUDE_PATHS = Arrays.asList(
+            "/ws",
+            "/ws/chat",
+            "/ws/chat/info"
+    );
+
 
     public CustomLogoutFilter(JwtUtil jwtUtil, RefreshRepository refreshRepository) {
 
@@ -36,6 +45,13 @@ public class CustomLogoutFilter extends GenericFilterBean {
     private void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
 
         String requestUri = request.getRequestURI();
+
+        // WebSocket 경로는 필터 건너뛰기
+        if (EXCLUDE_PATHS.stream().anyMatch(requestUri::startsWith)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         log.info("requestUri : " + requestUri);
         if (!requestUri.matches("^\\/logout$")) {
             log.info("URI is not logout");
