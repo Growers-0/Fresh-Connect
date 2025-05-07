@@ -24,7 +24,7 @@ public interface ChatRepository extends JpaRepository<Chat, UUID> {
 
     @Query("SELECT new hekireki.sanjijiksong.domain.chating.dto.ChatListResponse(" +
             "c.id," +
-            "CASE WHEN c.sender.id = :id THEN c.receiver.email ELSE c.sender.email END, " +
+            "CASE WHEN c.sender.id = :id THEN c.receiver.nickname ELSE c.sender.nickname END, " +
             "CASE WHEN c.sender.id = :id THEN c.senderLastReadTime ELSE c.receiverLastReadTime END, " +
             "CASE WHEN c.sender.id = :id THEN c.receiverLastReadTime ELSE c.senderLastReadTime END" +
             ") " +

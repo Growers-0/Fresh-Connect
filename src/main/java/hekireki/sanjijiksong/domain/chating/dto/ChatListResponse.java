@@ -1,10 +1,12 @@
 package hekireki.sanjijiksong.domain.chating.dto;
 
 import hekireki.sanjijiksong.domain.chating.entity.Chat;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Getter
 public class ChatListResponse {
     UUID chatId;
     String receiver;
@@ -18,9 +20,9 @@ public class ChatListResponse {
         this.receiverLastReadTime = chat.getSenderLastReadTime();
     }
 
-    public ChatListResponse(UUID chatId, String receiverEmail, LocalDateTime myLastReadTime, LocalDateTime receiverLastReadTime) {
+    public ChatListResponse(UUID chatId, String receiver, LocalDateTime myLastReadTime, LocalDateTime receiverLastReadTime) {
         this.chatId = chatId;
-        this.receiver = receiverEmail;
+        this.receiver = receiver;
         this.myLastReadTime = myLastReadTime;
         this.receiverLastReadTime = receiverLastReadTime;
     }
