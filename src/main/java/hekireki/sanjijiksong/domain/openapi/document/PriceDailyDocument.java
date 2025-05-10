@@ -28,7 +28,7 @@ public class PriceDailyDocument {
     @Field(type = FieldType.Keyword)
     private String classCode;
 
-    @Field(type = FieldType.Text, analyzer = "standard") // 한글이면 nori 분석기 추천
+    @Field(type = FieldType.Text, analyzer = "custom-nori-analyzer")
     private String itemName;
 
     @Field(type = FieldType.Keyword)

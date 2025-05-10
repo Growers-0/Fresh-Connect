@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -87,7 +88,7 @@ public class OpenAPIController implements OpenApi {
     }
 
     @GetMapping("/naver/trending")
-    public ResponseEntity<?> getTrendingKeywords() {
+    public ResponseEntity<?> getTrendingKeywords() throws IOException {
         Map<String, TrendingKeywordPrice> priceInfoForTrendingKeywords = trendingKeywordService.getTrendingKeywordsPriceInfo();
         return ResponseEntity.ok(priceInfoForTrendingKeywords);
     }

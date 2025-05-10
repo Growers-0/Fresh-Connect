@@ -58,20 +58,31 @@ public class KamisPriceImportService {
     @Transactional
     public CompletableFuture<Void> getPrices(String categoryCode, String regDay) {
         return CompletableFuture.runAsync(() -> {
-            URI targetUri = buildKamisUri(categoryCode, regDay);
-            KamisDailyResponse response = restTemplate.exchange(targetUri, HttpMethod.GET, getHttpEntity(), KamisDailyResponse.class).getBody();
+            try {
+                URI targetUri = buildKamisUri(categoryCode, regDay);
+                KamisDailyResponse response = restTemplate.exchange(
+                        targetUri, HttpMethod.GET, getHttpEntity(), KamisDailyResponse.class
+                ).getBody();
 
-            List<PriceDaily> priceList = response.from();
-            log.info("Price List: {}", priceList.toString());
+                if (response == null) {
+                    log.warn("⚠️ 응답이 null입니다. category: {}, date: {}", categoryCode, regDay);
+                    return;
+                }
 
-            priceDailyRepository.saveAll(priceList);
+                List<PriceDaily> priceList = response.from();
 
-            // Elasticsearch 저장
-            List<PriceDailyDocument> documents = priceList.stream()
-                    .map(PriceDailyDocument::from)
-                    .toList();
-            priceDailySearchRepository.saveAll(documents);
-            log.info("✅ {}건 Elasticsearch에 저장됨", documents.size());
+                priceDailyRepository.saveAll(priceList);
+
+                List<PriceDailyDocument> documents = priceList.stream()
+                        .map(PriceDailyDocument::from)
+                        .toList();
+                priceDailySearchRepository.saveAll(documents);
+
+                log.info("✅ {}건 Elasticsearch에 저장됨", documents.size());
+
+            } catch (Exception e) {
+                log.error("❌ getPrices 예외 발생 - category: {}, date: {}, error: {}", categoryCode, regDay, e.getMessage(), e);
+            }
         });
     }
 
@@ -108,7 +119,13 @@ public class KamisPriceImportService {
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
             String regDay = date.toString(); // "yyyy-MM-dd" 형식
             for (String categoryCode : CATEGORY_CODES) {
-                futures.add(getPrices(categoryCode, regDay));  // 각 카테고리 가격을 비동기적으로 가져옴
+                futures.add(
+                        getPrices(categoryCode, regDay)
+                                .exceptionally(ex -> {
+                                    log.error("⚠️ getPrices 실패 - category: {}, date: {}, error: {}", categoryCode, regDay, ex.getMessage());
+                                    return null;
+                                })
+                );
             }
         }
 

@@ -7,6 +7,9 @@
         "ngram": {
           "type": "text",
           "analyzer": "custom-ngram-analyzer"
+        },
+        "keyword": {
+          "type": "keyword"
         }
       }
     },

@@ -1,6 +1,13 @@
 package hekireki.sanjijiksong.domain.openapi.service;
 
-import hekireki.sanjijiksong.domain.openapi.Repository.PriceDailySearchRepository;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchPhraseQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import hekireki.sanjijiksong.domain.openapi.Repository.TrendingKeywordRepository;
 import hekireki.sanjijiksong.domain.openapi.document.PriceDailyDocument;
 import hekireki.sanjijiksong.domain.openapi.dto.TrendingKeywordPrice;
@@ -14,11 +21,9 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
@@ -28,7 +33,7 @@ import java.util.*;
 @Slf4j
 public class TrendingKeywordService {
     private final TrendingKeywordRepository trendingKeywordRepository;
-    private final PriceDailySearchRepository priceDailySearchRepository;
+    private final ElasticsearchClient elasticsearchClient;
     private final WebDriverProvider webDriverProvider;
 
     /**
@@ -37,41 +42,59 @@ public class TrendingKeywordService {
      * <p>
      * 반환 타입은 Map<String, TrendingKeywordPriceDto>로, 키는 인기 검색어, 값은 해당 DTO입니다.
      */
-    @Transactional(readOnly = true)
-    public Map<String, TrendingKeywordPrice> getTrendingKeywordsPriceInfo() {
-        List<TrendingKeyword> trendingKeywords = trendingKeywordRepository.findByCreateDate(LocalDate.now());
+    public Map<String, TrendingKeywordPrice> getTrendingKeywordsPriceInfo() throws IOException {
+        List<TrendingKeyword> keywords = trendingKeywordRepository.findByCreateDate(LocalDate.now());
 
-        if (trendingKeywords.isEmpty()) {
+        if (keywords.isEmpty()) {
             log.info("오늘 날짜에 해당하는 인기 검색어가 없습니다.");
             return Collections.emptyMap();
         }
+
+        List<Query> shouldQueries = keywords.stream()
+                .map(k -> MatchPhraseQuery.of(mp -> mp
+                        .field("itemName")
+                        .query(k.getKeyword())
+                )._toQuery())
+                .toList();
+
+        BoolQuery boolQuery = BoolQuery.of(b -> b.should(shouldQueries));
+
+        SearchRequest request = SearchRequest.of(s -> s
+                .index("pricedaily")
+                .query(q -> q.bool(boolQuery))
+                .sort(sort -> sort
+                        .field(f -> f
+                                .field("snapshotDate")
+                                .order(SortOrder.Desc)
+                        )
+                )
+                .size(1000)
+        );
+
+        SearchResponse<PriceDailyDocument> response = elasticsearchClient.search(request, PriceDailyDocument.class);
+
+        // 키워드별 가장 최신 문서만 선택
         Map<String, TrendingKeywordPrice> result = new HashMap<>();
-        Pageable pageable = PageRequest.of(0, 1); // 최신 1개만 조회
-
-        for (TrendingKeyword tk : trendingKeywords) {
-            List<PriceDailyDocument> docs = priceDailySearchRepository
-                    .findTopByItemNameContainingOrderBySnapshotDateDesc(tk.getKeyword(), pageable);
-
-            if (!docs.isEmpty()) {
-                PriceDailyDocument doc = docs.get(0);
-
-                TrendingKeywordPrice dto = new TrendingKeywordPrice(
-                        tk.getKeyword(),
-                        tk.getCategory(),
-                        tk.getRank(),
-                        tk.getCreateDate(),
-                        doc.getItemName(),
-                        doc.getPrice(),
-                        doc.getSnapshotDate()
-                );
-                result.put(tk.getKeyword(), dto);
-                log.info("키워드 [{}]에 대한 최신 가격 정보 DTO 생성: {}", tk.getKeyword(), dto);
-            } else {
-                log.info("키워드 [{}]에 매칭되는 가격 정보가 없습니다.", tk.getKeyword());
-            }
+        for (TrendingKeyword keyword : keywords) {
+            response.hits().hits().stream()
+                    .map(Hit::source)
+                    .filter(doc -> doc.getItemName().contains(keyword.getKeyword()))
+                    .findFirst()
+                    .ifPresent(doc -> {
+                        TrendingKeywordPrice dto = new TrendingKeywordPrice(
+                                keyword.getKeyword(),
+                                keyword.getCategory(),
+                                keyword.getRank(),
+                                keyword.getCreateDate(),
+                                doc.getItemName(),
+                                doc.getPrice(),
+                                doc.getSnapshotDate()
+                        );
+                        result.put(keyword.getKeyword(), dto);
+                    });
         }
 
-        return Collections.unmodifiableMap(result);
+        return result;
     }
 
     public void saveTodayTrendingKeywords() {

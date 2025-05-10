@@ -9,10 +9,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import hekireki.sanjijiksong.global.common.exception.KamisException;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 
+@Slf4j
 public class PriceDeserializer extends StdDeserializer<KamisDailyResponse.Data> {
 
     public PriceDeserializer() {
@@ -35,11 +36,11 @@ public class PriceDeserializer extends StdDeserializer<KamisDailyResponse.Data> 
 
                 switch (errorCode){
                     case "001": // no data
-                        throw new KamisException.KamisApiNoDataException();
+                        log.info("kamis no data");
                     case "200": // Wrong parameter
-                        throw new KamisException.KamisApiWrongParameterException();
+                        log.info("kamis wrong parameter");
                     case "900": // Unauthenticated request
-                        throw new KamisException.KamisApiUnauthenticatedException();
+                        log.info("kamis wrong authenticated");
                 }
             }
         }
