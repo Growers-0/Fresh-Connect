@@ -1,9 +1,12 @@
 package hekireki.sanjijiksong.global.common.exception;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+
 @Getter
+@RequiredArgsConstructor
 public enum ErrorCode {
     //Member
     USER_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "이미 존재하는 회원입니다."),
@@ -27,6 +30,7 @@ public enum ErrorCode {
     ORDER_NOT_CANCELABLE(HttpStatus.BAD_REQUEST, "취소할 수 없는 주문 상태입니다."),
     ORDER_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "주문 항목이 존재하지 않습니다."),
     ORDER_NOT_UPDATABLE(HttpStatus.BAD_REQUEST, "현재 상태에서는 주문을 수정할 수 없습니다."),
+    ORDER_ALREADY_PAID(HttpStatus.BAD_REQUEST, "이미 결제된 상태입니다."),
 
     //Security
     NO_REFRESH_TOKEN_COOKIE(HttpStatus.BAD_REQUEST, "리프레시 토큰 쿠키가 존재하지 않습니다."),
@@ -50,13 +54,11 @@ public enum ErrorCode {
 
     // Following 관련 에러
     ALREADY_FOLLOWING(HttpStatus.BAD_REQUEST, "이미 팔로우 중인 가게입니다."),
-    FOLLOWING_NOT_FOUND(HttpStatus.NOT_FOUND, "팔로우 정보를 찾을 수 없습니다.");
+    FOLLOWING_NOT_FOUND(HttpStatus.NOT_FOUND, "팔로우 정보를 찾을 수 없습니다."),
+    PAYMENT_SERVER_INTERVAL(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류로 결제에 실패했습니다.");
+
 
     private final HttpStatus status;
     private final String message;
 
-    ErrorCode(HttpStatus status, String message) {
-        this.status = status;
-        this.message = message;
-    }
 }

@@ -4,6 +4,7 @@ import hekireki.sanjijiksong.domain.order.api.OrderApi;
 import hekireki.sanjijiksong.domain.order.dto.OrderListUpdateRequest;
 import hekireki.sanjijiksong.domain.order.dto.OrderRequest;
 import hekireki.sanjijiksong.domain.order.dto.OrderResponse;
+import hekireki.sanjijiksong.domain.order.dto.PaymentRequest;
 import hekireki.sanjijiksong.domain.order.service.OrderService;
 import hekireki.sanjijiksong.global.security.dto.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -15,9 +16,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -30,19 +36,27 @@ public class OrderController implements OrderApi {
     // 주문 생성
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
-            @RequestBody @Valid OrderRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+        @RequestBody @Valid OrderRequest request,
+        @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         OrderResponse response = orderService.createOrder(userDetails.getUser(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
     }
 
+    @PostMapping("/confirm")
+    public ResponseEntity<?> confirmOrder(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @RequestBody PaymentRequest paymentRequest
+    ) {
+        return ResponseEntity.ok().body(orderService.confirmOrder(paymentRequest));
+    }
+
     // 주문 취소
     @PatchMapping("/{orderId}/cancel")
     public ResponseEntity<Void> cancelOrder(
-            @PathVariable("orderId") Long orderId,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+        @PathVariable("orderId") Long orderId,
+        @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         orderService.cancelOrder(orderId, userDetails.getUser());
         return ResponseEntity.noContent().build();
@@ -51,9 +65,9 @@ public class OrderController implements OrderApi {
     // 주문 수정
     @PatchMapping("/{orderId}/items/{itemId}")
     public ResponseEntity<OrderResponse> updateOrderItems(
-            @PathVariable("orderId") Long orderId,
-            @RequestBody @Valid OrderListUpdateRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        @PathVariable("orderId") Long orderId,
+        @RequestBody @Valid OrderListUpdateRequest request,
+        @AuthenticationPrincipal CustomUserDetails userDetails) {
         OrderResponse response = orderService.updateOrderItems(request, userDetails.getUser());
         return ResponseEntity.ok(response);
     }
@@ -62,8 +76,8 @@ public class OrderController implements OrderApi {
     // 단일 주문 조회
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponse> getOrderDetail(
-            @PathVariable("orderId") Long orderId,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+        @PathVariable("orderId") Long orderId,
+        @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         OrderResponse response = orderService.getOrderDetail(orderId, userDetails.getUser());
         return ResponseEntity.ok(response);
@@ -72,9 +86,9 @@ public class OrderController implements OrderApi {
     // 내 주문 전체 조회
     @GetMapping
     public ResponseEntity<Page<OrderResponse>> getMyOrders(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @RequestParam(value = "page", defaultValue = "0") int page,
+        @RequestParam(value = "size", defaultValue = "10") int size
     ) {
         Pageable pageable = PageRequest.of(page, size);
         Page<OrderResponse> orders = orderService.getMyOrders(userDetails.getUser(), pageable);

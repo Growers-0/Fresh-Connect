@@ -5,7 +5,9 @@ import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
 import java.util.List;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface ItemSearchRepository extends ElasticsearchRepository<ItemDocument, String> {
 
     @Query("""
